@@ -52,6 +52,7 @@ async def post_root(request: RootRequest) -> RootResponse:
         csv_logger.log_attempt(
             AttemptRecord(
                 session_id=csv_logger.get_current_session_id(),
+                config_target=csv_logger.get_current_config_target() or "T1",
                 request_number=request_number,
                 attempt_number=attempt + 1,
                 request_id=request.id,

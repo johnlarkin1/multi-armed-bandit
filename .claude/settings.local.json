@@ -9,7 +9,8 @@
       "Bash(npm run build:*)",
       "Bash(make:*)",
       "Bash(npm run lint)",
-      "Skill(generate-pr)"
+      "Skill(generate-pr)",
+      "Bash(uv run ruff:*)"
     ]
   }
 }

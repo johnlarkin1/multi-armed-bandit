@@ -64,6 +64,13 @@ class ServerStats:
         return self.total_latency_ms / self.num_requests
 
 
+# Ports for each server config tier
+CONFIG_PORTS: dict[SERVER_CONFIG_TYPE, list[int]] = {
+    "T1": list(range(4000, 4010)),
+    "T2": list(range(5000, 5010)),
+    "T3": list(range(6000, 6010)),
+}
+
 DOWNSTREAM_SERVER_CONFIGS: dict[int, ServerConfig] = {
     **{4000 + i: ServerConfig(server_type="T1", port=4000 + i) for i in range(10)},
     **{5000 + i: ServerConfig(server_type="T2", port=5000 + i) for i in range(10)},

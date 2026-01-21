@@ -9,7 +9,6 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from pathlib import Path
 
 import orjson
 from rich.console import Console
@@ -18,21 +17,11 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 from rich.prompt import IntPrompt, Prompt
 from rich.table import Table
 
+from flaky_load_balancer.constants import CONFIG_PORTS
+from flaky_load_balancer.paths import DASHBOARD_PATH, FAILINGSERVER_PATH, METRICS_PATH, PACKAGE_ROOT
 from flaky_load_balancer.strategies.enum import LoadBalancerStrategy
 
 console = Console()
-
-# Metrics file path
-METRICS_PATH = Path("metrics.json")
-
-# Path to dashboard directory
-DASHBOARD_PATH = Path(__file__).parent.parent / "dashboard"
-
-# Ports for T1 servers
-T1_PORTS = list(range(4000, 4010))
-
-# Path to failingserver binary (in resources directory)
-FAILINGSERVER_PATH = Path(__file__).parent.parent / "resources" / "failingserver"
 
 
 def collect_metrics_snapshot() -> dict | None:
@@ -124,6 +113,39 @@ def prompt_strategy() -> str | list[str]:
     return choice
 
 
+def get_config_choices() -> list[str]:
+    """Get list of available config targets."""
+    return ["ALL", "T1", "T2", "T3"]
+
+
+def prompt_config() -> str | list[str]:
+    """Prompt user to select a config target."""
+    choices = get_config_choices()
+
+    table = Table(title="Server Configurations")
+    table.add_column("Option", style="cyan")
+    table.add_column("Ports", style="yellow")
+    table.add_column("Description", style="green")
+
+    table.add_row("ALL", "-", "Run tests on all configurations sequentially")
+    table.add_row("T1", "4000-4009", "Constant error rate only")
+    table.add_row("T2", "5000-5009", "Constant error rate + fixed rate limit")
+    table.add_row("T3", "6000-6009", "Constant error rate + dynamic rate limit")
+
+    console.print(table)
+    console.print()
+
+    choice = Prompt.ask(
+        "Select config target",
+        choices=choices,
+        default="T1",
+    )
+
+    if choice == "ALL":
+        return ["T1", "T2", "T3"]
+    return choice
+
+
 def prompt_num_requests() -> int:
     """Prompt user for number of requests."""
     return IntPrompt.ask(
@@ -161,10 +183,13 @@ def start_failingserver() -> subprocess.Popen | None:
         return None
 
 
-def start_load_balancer(strategy: str, verbose: bool = False, session_id: str | None = None) -> subprocess.Popen | None:
+def start_load_balancer(
+    strategy: str, verbose: bool = False, session_id: str | None = None, config_target: str = "T1"
+) -> subprocess.Popen | None:
     """Start the FastAPI load balancer server."""
     env = os.environ.copy()
     env["LB_STRATEGY"] = strategy
+    env["LB_CONFIG_TARGET"] = config_target
     if session_id:
         env["LB_SESSION_ID"] = session_id
 
@@ -183,7 +208,7 @@ def start_load_balancer(strategy: str, verbose: bool = False, session_id: str | 
             env=env,
             stdout=None if verbose else subprocess.DEVNULL,
             stderr=None if verbose else subprocess.DEVNULL,
-            cwd=Path(__file__).parent.parent,
+            cwd=PACKAGE_ROOT,
         )
         return proc
     except Exception as e:
@@ -257,7 +282,9 @@ def cleanup_processes(*procs: subprocess.Popen | None) -> None:
                 pass
 
 
-def run_test(strategy: str, num_requests: int, verbose: bool = False, session_id: str | None = None) -> dict | None:
+def run_test(
+    strategy: str, num_requests: int, verbose: bool = False, session_id: str | None = None, config_target: str = "T1"
+) -> dict | None:
     """Run a single test with the given strategy.
 
     Args:
@@ -265,13 +292,18 @@ def run_test(strategy: str, num_requests: int, verbose: bool = False, session_id
         num_requests: Number of requests to send.
         verbose: Whether to show server logs.
         session_id: Optional session ID to group this run with others.
+        config_target: Which server configuration to target (T1, T2, or T3).
 
     Returns:
         Results dict or None on failure.
     """
-    console.print(Panel(f"Testing Strategy: [bold cyan]{strategy}[/bold cyan]"))
+    console.print(
+        Panel(f"Testing Strategy: [bold cyan]{strategy}[/bold cyan] on [bold yellow]{config_target}[/bold yellow]")
+    )
 
     procs = []
+    target_ports = CONFIG_PORTS[config_target]
+    port_range = f"{target_ports[0]}-{target_ports[-1]}"
 
     try:
         # Start failingserver
@@ -287,13 +319,13 @@ def run_test(strategy: str, num_requests: int, verbose: bool = False, session_id
                 return None
             procs.append(failing_proc)
 
-            progress.update(task, description="Waiting for T1 ports (4000-4009)...")
-            if not wait_for_ports(T1_PORTS, timeout=30):
-                console.print("[red]Timeout waiting for T1 ports[/red]")
+            progress.update(task, description=f"Waiting for {config_target} ports ({port_range})...")
+            if not wait_for_ports(target_ports, timeout=30):
+                console.print(f"[red]Timeout waiting for {config_target} ports[/red]")
                 return None
 
             progress.update(task, description="Starting load balancer...")
-            lb_proc = start_load_balancer(strategy, verbose=verbose, session_id=session_id)
+            lb_proc = start_load_balancer(strategy, verbose=verbose, session_id=session_id, config_target=config_target)
             if lb_proc is None:
                 return None
             procs.append(lb_proc)
@@ -351,9 +383,9 @@ def run_test(strategy: str, num_requests: int, verbose: bool = False, session_id
         cleanup_processes(*procs)
 
 
-def display_results(results: dict, strategy: str) -> None:
+def display_results(results: dict, strategy: str, config: str = "T1") -> None:
     """Display test results in a nice table."""
-    table = Table(title=f"Results for {strategy}")
+    table = Table(title=f"Results for {strategy} on {config}")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
 
@@ -381,43 +413,51 @@ def cmd_start_harness(args) -> None:
 
     # Get user input
     strategy_choice = prompt_strategy()
+    config_choice = prompt_config()
     num_requests = prompt_num_requests()
 
-    # Handle "ALL" vs single strategy
+    # Handle "ALL" vs single strategy/config
     strategies = strategy_choice if isinstance(strategy_choice, list) else [strategy_choice]
+    configs = config_choice if isinstance(config_choice, list) else [config_choice]
 
-    # Generate session_id when running multiple strategies
+    # Generate session_id when running multiple strategies or configs
     session_id = None
-    if len(strategies) > 1:
+    if len(strategies) > 1 or len(configs) > 1:
         session_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         console.print(f"[dim]Session ID: {session_id}[/dim]")
 
     console.print()
-    console.print(f"[bold]Running tests with {num_requests} requests per strategy[/bold]")
+    console.print(f"[bold]Running tests with {num_requests} requests per strategy/config[/bold]")
     console.print()
 
-    all_results = {}
+    # all_results keyed by (strategy, config) tuple
+    all_results: dict[tuple[str, str], dict] = {}
 
-    for strategy in strategies:
-        results = run_test(strategy, num_requests, verbose=args.verbose, session_id=session_id)
-        if results:
-            all_results[strategy] = results
-            display_results(results, strategy)
-            console.print()
+    for config in configs:
+        for strategy in strategies:
+            results = run_test(
+                strategy, num_requests, verbose=args.verbose, session_id=session_id, config_target=config
+            )
+            if results:
+                all_results[(strategy, config)] = results
+                display_results(results, strategy, config)
+                console.print()
 
-    # Summary if multiple strategies
+    # Summary if multiple runs
     if len(all_results) > 1:
         console.print(Panel("[bold]Summary Comparison[/bold]"))
         summary_table = Table()
         summary_table.add_column("Strategy", style="cyan")
+        summary_table.add_column("Config", style="yellow")
         summary_table.add_column("Success Rate", style="green")
-        summary_table.add_column("Score", style="yellow")
-        summary_table.add_column("Retries", style="magenta")
+        summary_table.add_column("Score", style="magenta")
+        summary_table.add_column("Retries", style="red")
         summary_table.add_column("Avg Latency", style="blue")
 
-        for strategy, results in all_results.items():
+        for (strategy, config), results in all_results.items():
             summary_table.add_row(
                 strategy,
+                config,
                 f"{results.get('success_rate', 0):.2%}",
                 str(results.get("score", 0)),
                 str(results.get("total_retries", 0)),
@@ -509,17 +549,36 @@ def cmd_start_flaky_servers(args) -> None:
         # Run in foreground so user can Ctrl+C
         proc = subprocess.Popen(cmd)
 
-        # Wait for ports to be ready
+        # Wait for all port ranges to be ready
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             console=console,
         ) as progress:
             task = progress.add_task("Waiting for servers to start...", total=None)
-            if wait_for_ports(T1_PORTS, timeout=30):
-                progress.update(task, description="[green]T1 servers ready (4000-4009)[/green]")
+
+            # Wait for T1 ports
+            progress.update(task, description="Waiting for T1 servers (4000-4009)...")
+            if wait_for_ports(CONFIG_PORTS["T1"], timeout=30):
+                console.print("[green]T1 servers ready (4000-4009)[/green]")
             else:
                 console.print("[red]Timeout waiting for T1 ports[/red]")
+
+            # Wait for T2 ports
+            progress.update(task, description="Waiting for T2 servers (5000-5009)...")
+            if wait_for_ports(CONFIG_PORTS["T2"], timeout=30):
+                console.print("[green]T2 servers ready (5000-5009)[/green]")
+            else:
+                console.print("[red]Timeout waiting for T2 ports[/red]")
+
+            # Wait for T3 ports
+            progress.update(task, description="Waiting for T3 servers (6000-6009)...")
+            if wait_for_ports(CONFIG_PORTS["T3"], timeout=30):
+                console.print("[green]T3 servers ready (6000-6009)[/green]")
+            else:
+                console.print("[red]Timeout waiting for T3 ports[/red]")
+
+            progress.update(task, description="[green]All servers ready![/green]")
 
         console.print("[green]Flaky servers running. Press Ctrl+C to stop.[/green]")
         proc.wait()
