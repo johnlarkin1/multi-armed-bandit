@@ -7,8 +7,7 @@ from typing import Any
 
 import orjson
 
-# Default metrics file path
-DEFAULT_METRICS_PATH = Path("metrics.json")
+from flaky_load_balancer.paths import METRICS_PATH as DEFAULT_METRICS_PATH
 
 
 @dataclass

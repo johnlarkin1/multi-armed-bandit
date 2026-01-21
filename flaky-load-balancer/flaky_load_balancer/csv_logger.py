@@ -6,9 +6,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-RUNS_DIR = Path("runs")
+from flaky_load_balancer.paths import RUNS_DIR
+
 CSV_HEADERS = [
     "session_id",
+    "config_target",
     "request_number",
     "attempt_number",
     "request_id",
@@ -27,6 +29,7 @@ class AttemptRecord:
     """Record of a single request attempt."""
 
     session_id: str | None
+    config_target: str
     request_number: int
     attempt_number: int
     request_id: str
@@ -45,6 +48,7 @@ class RunInfo:
 
     run_id: str
     session_id: str | None
+    config_target: str
     strategy: str
     started_at: float
     ended_at: float
@@ -72,16 +76,18 @@ class CSVLogger:
         self._request_counter = 0
         self._current_run_id: str | None = None
         self._current_session_id: str | None = None
+        self._current_config_target: str | None = None
         self._current_path: Path | None = None
         self._current_strategy: str | None = None
         RUNS_DIR.mkdir(exist_ok=True)
 
-    def start_new_run(self, strategy: str, session_id: str | None = None) -> str:
+    def start_new_run(self, strategy: str, session_id: str | None = None, config_target: str = "T1") -> str:
         """Start a new run with a unique ID. Returns the run_id."""
         with self._lock:
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            self._current_run_id = f"{timestamp}_{strategy}"
+            self._current_run_id = f"{timestamp}_{strategy}_{config_target}"
             self._current_session_id = session_id
+            self._current_config_target = config_target
             self._current_path = RUNS_DIR / f"{self._current_run_id}.csv"
             self._current_strategy = strategy
             self._request_counter = 0
@@ -91,6 +97,10 @@ class CSVLogger:
     def get_current_session_id(self) -> str | None:
         """Get the current session ID."""
         return self._current_session_id
+
+    def get_current_config_target(self) -> str | None:
+        """Get the current config target."""
+        return self._current_config_target
 
     def _init_file(self) -> None:
         """Initialize CSV file with headers."""
@@ -123,6 +133,7 @@ class CSVLogger:
                 writer.writerow(
                     [
                         record.session_id or self._current_session_id or "",
+                        record.config_target or self._current_config_target or "T1",
                         record.request_number,
                         record.attempt_number,
                         record.request_id,
@@ -145,6 +156,7 @@ class CSVLogger:
             if records:
                 # Extract metadata from records
                 session_id = records[0].get("session_id") or None
+                config_target = records[0].get("config_target") or "T1"
                 strategy = records[0]["strategy"]
                 started_at = records[0]["timestamp"]
                 ended_at = records[-1]["timestamp"]
@@ -153,6 +165,7 @@ class CSVLogger:
                 runs.append(
                     RunInfo(
                         run_id=run_id,
+                        config_target=config_target,
                         session_id=session_id,
                         strategy=strategy,
                         started_at=started_at,
@@ -217,11 +230,13 @@ class CSVLogger:
             with open(path, "r", newline="") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    # Handle both old files (without session_id) and new files
+                    # Handle both old files (without session_id/config_target) and new files
                     session_id = row.get("session_id", "") or None
+                    config_target = row.get("config_target", "") or "T1"
                     records.append(
                         {
                             "session_id": session_id,
+                            "config_target": config_target,
                             "request_number": int(row["request_number"]),
                             "attempt_number": int(row["attempt_number"]),
                             "request_id": row["request_id"],
@@ -242,6 +257,7 @@ class CSVLogger:
             self._request_counter = 0
             self._current_run_id = None
             self._current_session_id = None
+            self._current_config_target = None
             self._current_path = None
             self._current_strategy = None
 
