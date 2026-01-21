@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Play, Clock, Database } from 'lucide-react';
 import { useDashboardStore } from '@/stores/dashboardStore';
-import { STRATEGY_NAMES, STRATEGY_COLORS, type Strategy } from '@/types/metrics';
+import { STRATEGY_NAMES, STRATEGY_COLORS, parseStrategyFromRunId } from '@/types/metrics';
+import { withOpacity } from '@/constants/chartStyles';
 
 interface RunSelectorProps {
   onSelectRun: (runId: string) => void;
@@ -13,9 +14,11 @@ export function RunSelector({ onSelectRun }: RunSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const availableRuns = useDashboardStore((state) => state.availableRuns);
-  const currentRunId = useDashboardStore((state) => state.currentRunId);
-  const viewingRunId = useDashboardStore((state) => state.viewingRunId);
+  const { availableRuns, currentRunId, viewingRunId } = useDashboardStore((state) => ({
+    availableRuns: state.availableRuns,
+    currentRunId: state.currentRunId,
+    viewingRunId: state.viewingRunId,
+  }));
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -49,14 +52,8 @@ export function RunSelector({ onSelectRun }: RunSelectorProps) {
     return `${minutes}m ${seconds}s`;
   };
 
-  const getStrategyFromRunId = (runId: string): Strategy | null => {
-    // Run ID format: "2024-01-15_14-30-45_v4_thompson"
-    const match = runId.match(/(v\d)/);
-    return match ? match[1] as Strategy : null;
-  };
-
-  const currentRun = availableRuns.find(r => r.run_id === viewingRunId);
-  const currentStrategy = currentRun ? getStrategyFromRunId(currentRun.run_id) : null;
+  const currentRun = availableRuns.find((r) => r.run_id === viewingRunId);
+  const currentStrategy = currentRun ? parseStrategyFromRunId(currentRun.run_id) : null;
   const strategyColor = currentStrategy ? STRATEGY_COLORS[currentStrategy] : '#64748b';
 
   if (availableRuns.length === 0) {
@@ -80,7 +77,7 @@ export function RunSelector({ onSelectRun }: RunSelectorProps) {
             <div className="flex items-center gap-2">
               <span
                 className="px-1.5 py-0.5 rounded text-xs font-medium"
-                style={{ backgroundColor: `${strategyColor}30`, color: strategyColor }}
+                style={{ backgroundColor: withOpacity(strategyColor, 'light'), color: strategyColor }}
               >
                 {currentRun.strategy.split('_')[0].toUpperCase()}
               </span>
@@ -104,7 +101,7 @@ export function RunSelector({ onSelectRun }: RunSelectorProps) {
       {isOpen && (
         <div className="absolute top-full left-0 mt-1 w-80 max-h-96 overflow-y-auto bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-50">
           {availableRuns.map((run) => {
-            const strategy = getStrategyFromRunId(run.run_id);
+            const strategy = parseStrategyFromRunId(run.run_id);
             const color = strategy ? STRATEGY_COLORS[strategy] : '#64748b';
             const isSelected = run.run_id === viewingRunId;
             const isLive = run.run_id === currentRunId;
@@ -131,7 +128,7 @@ export function RunSelector({ onSelectRun }: RunSelectorProps) {
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className="px-1.5 py-0.5 rounded text-xs font-medium"
-                      style={{ backgroundColor: `${color}30`, color }}
+                      style={{ backgroundColor: withOpacity(color, 'light'), color }}
                     >
                       {run.strategy.split('_')[0].toUpperCase()}
                     </span>

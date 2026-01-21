@@ -16,18 +16,31 @@ export function ReplayControls() {
   // Activate the replay interval logic
   useReplay();
 
-  const history = useDashboardStore((state) => state.history);
-  const replayIndex = useDashboardStore((state) => state.replayIndex);
-  const isLive = useDashboardStore((state) => state.isLive);
-  const isPlaying = useDashboardStore((state) => state.isPlaying);
-  const playbackSpeed = useDashboardStore((state) => state.playbackSpeed);
-
-  const goLive = useDashboardStore((state) => state.goLive);
-  const setReplayIndex = useDashboardStore((state) => state.setReplayIndex);
-  const togglePlayback = useDashboardStore((state) => state.togglePlayback);
-  const setPlaybackSpeed = useDashboardStore((state) => state.setPlaybackSpeed);
-  const stepForward = useDashboardStore((state) => state.stepForward);
-  const stepBackward = useDashboardStore((state) => state.stepBackward);
+  const {
+    history,
+    replayIndex,
+    isLive,
+    isPlaying,
+    playbackSpeed,
+    goLive,
+    setReplayIndex,
+    togglePlayback,
+    setPlaybackSpeed,
+    stepForward,
+    stepBackward,
+  } = useDashboardStore((state) => ({
+    history: state.history,
+    replayIndex: state.replayIndex,
+    isLive: state.isLive,
+    isPlaying: state.isPlaying,
+    playbackSpeed: state.playbackSpeed,
+    goLive: state.goLive,
+    setReplayIndex: state.setReplayIndex,
+    togglePlayback: state.togglePlayback,
+    setPlaybackSpeed: state.setPlaybackSpeed,
+    stepForward: state.stepForward,
+    stepBackward: state.stepBackward,
+  }));
 
   const startTime = history[0]?.timestamp ?? 0;
   const currentTime = history[replayIndex]?.timestamp ?? 0;

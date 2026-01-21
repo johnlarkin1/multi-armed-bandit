@@ -5,11 +5,16 @@ import { useDashboardStore } from '@/stores/dashboardStore';
 
 export function useReplay() {
   const intervalRef = useRef<number | null>(null);
-  const isPlaying = useDashboardStore((state) => state.isPlaying);
-  const playbackSpeed = useDashboardStore((state) => state.playbackSpeed);
-  const historyLength = useDashboardStore((state) => state.history.length);
-  const replayIndex = useDashboardStore((state) => state.replayIndex);
-  const stepForward = useDashboardStore((state) => state.stepForward);
+
+  const { isPlaying, playbackSpeed, historyLength, replayIndex, stepForward } = useDashboardStore(
+    (state) => ({
+      isPlaying: state.isPlaying,
+      playbackSpeed: state.playbackSpeed,
+      historyLength: state.history.length,
+      replayIndex: state.replayIndex,
+      stepForward: state.stepForward,
+    })
+  );
 
   useEffect(() => {
     if (isPlaying && replayIndex < historyLength - 1) {

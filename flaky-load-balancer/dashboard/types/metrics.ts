@@ -89,3 +89,23 @@ export function getHealthColor(successRate: number): string {
   if (successRate >= 0.5) return '#F97316'; // orange
   return '#EF4444'; // red
 }
+
+const VALID_STRATEGIES = new Set<string>(['v1', 'v2', 'v3', 'v4', 'v5']);
+
+/**
+ * Type guard to check if a string is a valid Strategy.
+ */
+export function isStrategy(value: string): value is Strategy {
+  return VALID_STRATEGIES.has(value);
+}
+
+/**
+ * Parses a strategy from a run ID string.
+ * Run ID format: "2024-01-15_14-30-45_v4_thompson"
+ */
+export function parseStrategyFromRunId(runId: string): Strategy | null {
+  const match = runId.match(/(v\d)/);
+  if (!match) return null;
+  const candidate = match[1];
+  return isStrategy(candidate) ? candidate : null;
+}

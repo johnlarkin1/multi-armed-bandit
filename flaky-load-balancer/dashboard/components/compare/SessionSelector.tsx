@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { Calendar, Layers } from 'lucide-react';
-import type { SessionInfo, Strategy } from '@/types/metrics';
-import { STRATEGY_COLORS } from '@/types/metrics';
+import type { SessionInfo } from '@/types/metrics';
+import { STRATEGY_COLORS, isStrategy } from '@/types/metrics';
+import { withOpacity } from '@/constants/chartStyles';
 
 interface SessionSelectorProps {
   sessions: SessionInfo[];
@@ -28,10 +29,11 @@ export function SessionSelector({ sessions, selectedSessionId, isLoading }: Sess
     });
   };
 
-  const getStrategyKey = (strategy: string): Strategy => {
+  const getStrategyKey = (strategy: string) => {
     // Extract v1, v2, etc. from strategy names like "v4_thompson"
     const match = strategy.match(/^v\d/);
-    return (match ? match[0] : 'v1') as Strategy;
+    const candidate = match ? match[0] : 'v1';
+    return isStrategy(candidate) ? candidate : 'v1';
   };
 
   if (isLoading) {
@@ -97,7 +99,7 @@ export function SessionSelector({ sessions, selectedSessionId, isLoading }: Sess
                     key={strategy}
                     className="px-2 py-0.5 rounded text-xs font-medium"
                     style={{
-                      backgroundColor: `${color}20`,
+                      backgroundColor: withOpacity(color, 'light'),
                       color: color,
                     }}
                   >

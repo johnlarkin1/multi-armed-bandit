@@ -21,14 +21,26 @@ interface RunsResponse {
 
 export function useMetricsSSE() {
   const eventSourceRef = useRef<EventSource | null>(null);
-  const setConnected = useDashboardStore((state) => state.setConnected);
-  const setStrategy = useDashboardStore((state) => state.setStrategy);
-  const addSnapshot = useDashboardStore((state) => state.addSnapshot);
-  const clearHistory = useDashboardStore((state) => state.clearHistory);
-  const loadFromHistory = useDashboardStore((state) => state.loadFromHistory);
-  const setAvailableRuns = useDashboardStore((state) => state.setAvailableRuns);
-  const setCurrentRunId = useDashboardStore((state) => state.setCurrentRunId);
-  const viewingRunId = useDashboardStore((state) => state.viewingRunId);
+
+  const {
+    viewingRunId,
+    setConnected,
+    setStrategy,
+    addSnapshot,
+    clearHistory,
+    loadFromHistory,
+    setAvailableRuns,
+    setCurrentRunId,
+  } = useDashboardStore((state) => ({
+    viewingRunId: state.viewingRunId,
+    setConnected: state.setConnected,
+    setStrategy: state.setStrategy,
+    addSnapshot: state.addSnapshot,
+    clearHistory: state.clearHistory,
+    loadFromHistory: state.loadFromHistory,
+    setAvailableRuns: state.setAvailableRuns,
+    setCurrentRunId: state.setCurrentRunId,
+  }));
 
   // Fetch list of available runs
   const fetchRuns = useCallback(async (): Promise<RunsResponse | null> => {

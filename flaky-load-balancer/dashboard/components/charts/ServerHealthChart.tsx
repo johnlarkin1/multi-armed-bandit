@@ -13,6 +13,18 @@ import {
 } from 'recharts';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { getServerType, getHealthColor, type ServerType } from '@/types/metrics';
+import {
+  TOOLTIP_CONTENT_STYLE,
+  GRID_STROKE,
+  GRID_DASH_ARRAY,
+  AXIS_STROKE,
+  AXIS_FONT_SIZE,
+  AXIS_FONT_SIZE_SMALL,
+  CHART_COLORS,
+  REFERENCE_LINE_DASH_ARRAY,
+  REFERENCE_LINE_OPACITY,
+  CHART_MARGINS,
+} from '@/constants/chartStyles';
 
 interface DataPoint {
   port: string;
@@ -23,10 +35,12 @@ interface DataPoint {
 }
 
 export function ServerHealthChart() {
-  const history = useDashboardStore((state) => state.history);
-  const replayIndex = useDashboardStore((state) => state.replayIndex);
-  const isLive = useDashboardStore((state) => state.isLive);
-  const selectedServerTypes = useDashboardStore((state) => state.selectedServerTypes);
+  const { history, replayIndex, isLive, selectedServerTypes } = useDashboardStore((state) => ({
+    history: state.history,
+    replayIndex: state.replayIndex,
+    isLive: state.isLive,
+    selectedServerTypes: state.selectedServerTypes,
+  }));
 
   // Get current snapshot based on live/replay state
   const snapshot = history.length === 0
@@ -58,6 +72,21 @@ export function ServerHealthChart() {
     .filter((d) => selectedServerTypes.includes(d.serverType))
     .sort((a, b) => parseInt(a.port, 10) - parseInt(b.port, 10));
 
+  const formatPercent = (v: number) => `${v}%`;
+  const formatTooltipValue = (
+    value: number | undefined,
+    _name: string,
+    props: { payload?: DataPoint }
+  ): [string, string] => {
+    const payload = props?.payload;
+    const val = value ?? 0;
+    if (!payload) return [`${val}`, ''];
+    return [
+      `${val.toFixed(1)}% (${payload.numRequests} reqs)`,
+      `Port ${payload.port} (${payload.serverType})`,
+    ];
+  };
+
   return (
     <div className="bg-slate-800 rounded-lg p-4 h-full">
       <div className="flex items-center justify-between mb-2">
@@ -78,40 +107,35 @@ export function ServerHealthChart() {
         </div>
       </div>
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+        <BarChart data={data} margin={CHART_MARGINS.withLabels}>
+          <CartesianGrid strokeDasharray={GRID_DASH_ARRAY} stroke={GRID_STROKE} />
           <XAxis
             dataKey="port"
-            stroke="#94a3b8"
-            fontSize={9}
+            stroke={AXIS_STROKE}
+            fontSize={AXIS_FONT_SIZE_SMALL}
             angle={-45}
             textAnchor="end"
             height={40}
           />
           <YAxis
-            stroke="#94a3b8"
-            fontSize={11}
+            stroke={AXIS_STROKE}
+            fontSize={AXIS_FONT_SIZE}
             domain={[0, 100]}
-            tickFormatter={(v) => `${v}%`}
+            tickFormatter={formatPercent}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '6px',
-            }}
-            formatter={(value: number | undefined, _name, props) => {
-              const payload = props?.payload as DataPoint | undefined;
-              const val = value ?? 0;
-              if (!payload) return [val, ''];
-              return [
-                `${val.toFixed(1)}% (${payload.numRequests} reqs)`,
-                `Port ${payload.port} (${payload.serverType})`,
-              ];
-            }}
+          <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} formatter={formatTooltipValue} />
+          <ReferenceLine
+            y={80}
+            stroke={CHART_COLORS.green}
+            strokeDasharray={GRID_DASH_ARRAY}
+            strokeOpacity={REFERENCE_LINE_OPACITY}
           />
-          <ReferenceLine y={80} stroke="#22C55E" strokeDasharray="3 3" strokeOpacity={0.5} />
-          <ReferenceLine y={50} stroke="#F97316" strokeDasharray="3 3" strokeOpacity={0.5} />
+          <ReferenceLine
+            y={50}
+            stroke={CHART_COLORS.orange}
+            strokeDasharray={GRID_DASH_ARRAY}
+            strokeOpacity={REFERENCE_LINE_OPACITY}
+          />
           <Bar dataKey="successRate" radius={[2, 2, 0, 0]}>
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
