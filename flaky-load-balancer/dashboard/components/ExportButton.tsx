@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Download, Image, FileJson, ChevronDown } from 'lucide-react';
+import { Download, Image as ImageIcon, FileJson, ChevronDown } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { saveAs } from 'file-saver';
 import { useDashboardStore } from '@/stores/dashboardStore';
@@ -86,7 +86,7 @@ export function ExportButton({ dashboardRef }: ExportButtonProps) {
               onClick={handleExportPng}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-600 text-left text-sm"
             >
-              <Image className="w-4 h-4 text-blue-400" />
+              <ImageIcon className="w-4 h-4 text-blue-400" />
               <div>
                 <p className="font-medium">Screenshot</p>
                 <p className="text-xs text-slate-400">Export as PNG</p>
