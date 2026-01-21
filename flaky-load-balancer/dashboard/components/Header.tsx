@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { Activity, Wifi, WifiOff, RefreshCw, Database, Zap, BarChart3, LayoutDashboard } from 'lucide-react';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { RunSelector } from '@/components/controls/RunSelector';
-import { STRATEGY_NAMES, STRATEGY_COLORS, type Strategy } from '@/types/metrics';
+import { STRATEGY_NAMES, STRATEGY_COLORS } from '@/types/metrics';
+import { withOpacity } from '@/constants/chartStyles';
 
 interface HeaderProps {
   onRefresh?: () => Promise<boolean>;
@@ -15,15 +16,28 @@ interface HeaderProps {
 
 export function Header({ onRefresh, onSelectRun }: HeaderProps) {
   const pathname = usePathname();
-  const isConnected = useDashboardStore((state) => state.isConnected);
-  const currentStrategy = useDashboardStore((state) => state.currentStrategy);
-  const isLive = useDashboardStore((state) => state.isLive);
-  const hasHistoricalData = useDashboardStore((state) => state.hasHistoricalData);
-  const historyLength = useDashboardStore((state) => state.history.length);
-  const liveRunDetected = useDashboardStore((state) => state.liveRunDetected);
-  const joinLiveRun = useDashboardStore((state) => state.joinLiveRun);
-  const viewingRunId = useDashboardStore((state) => state.viewingRunId);
-  const currentRunId = useDashboardStore((state) => state.currentRunId);
+
+  const {
+    isConnected,
+    currentStrategy,
+    isLive,
+    hasHistoricalData,
+    historyLength,
+    liveRunDetected,
+    joinLiveRun,
+    viewingRunId,
+    currentRunId,
+  } = useDashboardStore((state) => ({
+    isConnected: state.isConnected,
+    currentStrategy: state.currentStrategy,
+    isLive: state.isLive,
+    hasHistoricalData: state.hasHistoricalData,
+    historyLength: state.history.length,
+    liveRunDetected: state.liveRunDetected,
+    joinLiveRun: state.joinLiveRun,
+    viewingRunId: state.viewingRunId,
+    currentRunId: state.currentRunId,
+  }));
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -31,7 +45,7 @@ export function Header({ onRefresh, onSelectRun }: HeaderProps) {
   const isOnCompare = pathname.startsWith('/compare');
 
   const strategyName = currentStrategy ? STRATEGY_NAMES[currentStrategy] : 'Unknown';
-  const strategyColor = currentStrategy ? STRATEGY_COLORS[currentStrategy as Strategy] : '#64748b';
+  const strategyColor = currentStrategy ? STRATEGY_COLORS[currentStrategy] : '#64748b';
 
   const handleRefresh = async () => {
     if (!onRefresh || isRefreshing) return;
@@ -143,7 +157,7 @@ export function Header({ onRefresh, onSelectRun }: HeaderProps) {
             {currentStrategy && isOnDashboard && (
               <div
                 className="px-3 py-1 rounded-full text-sm font-medium"
-                style={{ backgroundColor: `${strategyColor}20`, color: strategyColor }}
+                style={{ backgroundColor: withOpacity(strategyColor, 'light'), color: strategyColor }}
               >
                 {currentStrategy.toUpperCase()}: {strategyName}
               </div>

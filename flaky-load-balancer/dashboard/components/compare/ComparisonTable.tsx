@@ -1,8 +1,9 @@
 'use client';
 
 import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
-import type { RunSummary, Strategy } from '@/types/metrics';
-import { STRATEGY_NAMES, STRATEGY_COLORS } from '@/types/metrics';
+import type { RunSummary } from '@/types/metrics';
+import { STRATEGY_NAMES, STRATEGY_COLORS, isStrategy } from '@/types/metrics';
+import { withOpacity } from '@/constants/chartStyles';
 
 interface ComparisonTableProps {
   data: RunSummary[];
@@ -13,9 +14,10 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
   const sortedData = [...data].sort((a, b) => b.score - a.score);
   const bestScore = sortedData[0]?.score ?? 0;
 
-  const getStrategyKey = (strategy: string): Strategy => {
+  const getStrategyKey = (strategy: string) => {
     const match = strategy.match(/^v\d/);
-    return (match ? match[0] : 'v1') as Strategy;
+    const candidate = match ? match[0] : 'v1';
+    return isStrategy(candidate) ? candidate : 'v1';
   };
 
   const getStrategyDisplayName = (strategy: string): string => {
@@ -66,7 +68,7 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                       <span
                         className="px-2.5 py-1 rounded text-xs font-bold"
                         style={{
-                          backgroundColor: `${color}25`,
+                          backgroundColor: withOpacity(color, 'light'),
                           color: color,
                         }}
                       >

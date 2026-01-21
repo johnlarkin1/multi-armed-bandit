@@ -11,6 +11,18 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useDashboardStore } from '@/stores/dashboardStore';
+import {
+  TOOLTIP_CONTENT_STYLE,
+  GRID_STROKE,
+  GRID_DASH_ARRAY,
+  AXIS_STROKE,
+  AXIS_FONT_SIZE,
+  CHART_COLORS,
+  REFERENCE_LINE_DASH_ARRAY,
+  REFERENCE_LINE_OPACITY,
+  GRADIENT_OPACITY,
+  CHART_MARGINS,
+} from '@/constants/chartStyles';
 
 interface DataPoint {
   time: number;
@@ -19,9 +31,11 @@ interface DataPoint {
 }
 
 export function SuccessRateChart() {
-  const history = useDashboardStore((state) => state.history);
-  const replayIndex = useDashboardStore((state) => state.replayIndex);
-  const isLive = useDashboardStore((state) => state.isLive);
+  const { history, replayIndex, isLive } = useDashboardStore((state) => ({
+    history: state.history,
+    replayIndex: state.replayIndex,
+    isLive: state.isLive,
+  }));
 
   // Get data up to current replay point
   const endIndex = isLive ? history.length : replayIndex + 1;
@@ -42,44 +56,53 @@ export function SuccessRateChart() {
     };
   });
 
+  const formatTime = (v: number) => `${v.toFixed(0)}s`;
+  const formatPercent = (v: number) => `${v}%`;
+  const formatTooltipLabel = (v: string | number) => `Time: ${Number(v).toFixed(1)}s`;
+  const formatTooltipValue = (value: number | undefined): [string, string] => [
+    `${(value ?? 0).toFixed(1)}%`,
+    'Success Rate',
+  ];
+
   return (
     <div className="bg-slate-800 rounded-lg p-4 h-full">
       <h3 className="text-sm font-medium text-slate-300 mb-2">Success Rate Over Time</h3>
       <ResponsiveContainer width="100%" height={200}>
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={data} margin={CHART_MARGINS.default}>
           <defs>
             <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+              <stop offset="5%" stopColor={CHART_COLORS.blue} stopOpacity={GRADIENT_OPACITY.top} />
+              <stop offset="95%" stopColor={CHART_COLORS.blue} stopOpacity={GRADIENT_OPACITY.bottom} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <CartesianGrid strokeDasharray={GRID_DASH_ARRAY} stroke={GRID_STROKE} />
           <XAxis
             dataKey="time"
-            stroke="#94a3b8"
-            fontSize={11}
-            tickFormatter={(v) => `${v.toFixed(0)}s`}
+            stroke={AXIS_STROKE}
+            fontSize={AXIS_FONT_SIZE}
+            tickFormatter={formatTime}
           />
           <YAxis
-            stroke="#94a3b8"
-            fontSize={11}
+            stroke={AXIS_STROKE}
+            fontSize={AXIS_FONT_SIZE}
             domain={[0, 110]}
-            tickFormatter={(v) => `${v}%`}
+            tickFormatter={formatPercent}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '6px',
-            }}
-            labelFormatter={(v) => `Time: ${Number(v).toFixed(1)}s`}
-            formatter={(value: number | undefined) => [`${(value ?? 0).toFixed(1)}%`, 'Success Rate']}
+            contentStyle={TOOLTIP_CONTENT_STYLE}
+            labelFormatter={formatTooltipLabel}
+            formatter={formatTooltipValue}
           />
-          <ReferenceLine y={100} stroke="#22C55E" strokeDasharray="5 5" strokeOpacity={0.5} />
+          <ReferenceLine
+            y={100}
+            stroke={CHART_COLORS.green}
+            strokeDasharray={REFERENCE_LINE_DASH_ARRAY}
+            strokeOpacity={REFERENCE_LINE_OPACITY}
+          />
           <Area
             type="monotone"
             dataKey="successRate"
-            stroke="#3B82F6"
+            stroke={CHART_COLORS.blue}
             strokeWidth={2}
             fill="url(#successGradient)"
           />

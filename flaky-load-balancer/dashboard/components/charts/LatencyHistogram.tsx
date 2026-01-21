@@ -11,6 +11,17 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useDashboardStore } from '@/stores/dashboardStore';
+import {
+  TOOLTIP_CONTENT_STYLE,
+  GRID_STROKE,
+  GRID_DASH_ARRAY,
+  AXIS_STROKE,
+  AXIS_FONT_SIZE,
+  AXIS_FONT_SIZE_SMALL,
+  CHART_COLORS,
+  REFERENCE_LINE_DASH_ARRAY,
+  CHART_MARGINS,
+} from '@/constants/chartStyles';
 
 interface HistogramBin {
   range: string;
@@ -57,9 +68,11 @@ function createHistogramBins(latencies: number[], numBins: number = 20): Histogr
 }
 
 export function LatencyHistogram() {
-  const history = useDashboardStore((state) => state.history);
-  const replayIndex = useDashboardStore((state) => state.replayIndex);
-  const isLive = useDashboardStore((state) => state.isLive);
+  const { history, replayIndex, isLive } = useDashboardStore((state) => ({
+    history: state.history,
+    replayIndex: state.replayIndex,
+    isLive: state.isLive,
+  }));
 
   // Get current snapshot based on live/replay state
   const snapshot = history.length === 0
@@ -80,6 +93,12 @@ export function LatencyHistogram() {
   const p50 = snapshot.latency_p50;
   const p99 = snapshot.latency_p99;
 
+  const formatTooltipValue = (value: number | undefined): [number, string] => [value ?? 0, 'Count'];
+  const formatTooltipLabel = (label: string) => `Latency: ${label}ms`;
+
+  const p50Bin = bins.find((b) => p50 >= b.min && p50 <= b.max)?.range;
+  const p99Bin = bins.find((b) => p99 >= b.min && p99 <= b.max)?.range;
+
   return (
     <div className="bg-slate-800 rounded-lg p-4 h-full">
       <div className="flex items-center justify-between mb-2">
@@ -96,42 +115,36 @@ export function LatencyHistogram() {
         </div>
       </div>
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={bins} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+        <BarChart data={bins} margin={CHART_MARGINS.withLabels}>
+          <CartesianGrid strokeDasharray={GRID_DASH_ARRAY} stroke={GRID_STROKE} />
           <XAxis
             dataKey="range"
-            stroke="#94a3b8"
-            fontSize={9}
+            stroke={AXIS_STROKE}
+            fontSize={AXIS_FONT_SIZE_SMALL}
             angle={-45}
             textAnchor="end"
             height={40}
             interval={2}
           />
-          <YAxis stroke="#94a3b8" fontSize={11} />
+          <YAxis stroke={AXIS_STROKE} fontSize={AXIS_FONT_SIZE} />
           <Tooltip
-            contentStyle={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '6px',
-            }}
-            formatter={(value: number | undefined) => [value ?? 0, 'Count']}
-            labelFormatter={(label) => `Latency: ${label}ms`}
+            contentStyle={TOOLTIP_CONTENT_STYLE}
+            formatter={formatTooltipValue}
+            labelFormatter={formatTooltipLabel}
           />
-          {/* P50 reference line */}
           <ReferenceLine
-            x={bins.find((b) => p50 >= b.min && p50 <= b.max)?.range}
-            stroke="#60A5FA"
-            strokeDasharray="5 5"
-            label={{ value: 'P50', position: 'top', fill: '#60A5FA', fontSize: 10 }}
+            x={p50Bin}
+            stroke={CHART_COLORS.lightBlue}
+            strokeDasharray={REFERENCE_LINE_DASH_ARRAY}
+            label={{ value: 'P50', position: 'top', fill: CHART_COLORS.lightBlue, fontSize: 10 }}
           />
-          {/* P99 reference line */}
           <ReferenceLine
-            x={bins.find((b) => p99 >= b.min && p99 <= b.max)?.range}
-            stroke="#F87171"
-            strokeDasharray="5 5"
-            label={{ value: 'P99', position: 'top', fill: '#F87171', fontSize: 10 }}
+            x={p99Bin}
+            stroke={CHART_COLORS.lightRed}
+            strokeDasharray={REFERENCE_LINE_DASH_ARRAY}
+            label={{ value: 'P99', position: 'top', fill: CHART_COLORS.lightRed, fontSize: 10 }}
           />
-          <Bar dataKey="count" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="count" fill={CHART_COLORS.purple} radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
