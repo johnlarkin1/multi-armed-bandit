@@ -61,7 +61,7 @@ export function SessionSelector({ sessions, selectedSessionId, isLoading }: Sess
         <div className="text-center py-8 text-slate-400">
           <p>No comparison sessions found.</p>
           <p className="text-sm mt-2">
-            Run multiple strategies together using <code className="bg-slate-700 px-1.5 py-0.5 rounded">flb</code> with "ALL" to create comparison sessions.
+            Run multiple strategies together using <code className="bg-slate-700 px-1.5 py-0.5 rounded">flb</code> with &quot;ALL&quot; to create comparison sessions.
           </p>
         </div>
       </div>

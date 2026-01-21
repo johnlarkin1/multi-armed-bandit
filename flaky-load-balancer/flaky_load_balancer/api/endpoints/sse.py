@@ -247,7 +247,6 @@ def _build_snapshot(
     latencies: list[float],
     per_server: dict[int, dict],
 ) -> dict:
-
     latency_p50 = 0.0
     latency_p99 = 0.0
     if latencies:
@@ -287,9 +286,7 @@ def _compute_run_summary(records: list[dict]) -> dict:
 
     strategy = records[0]["strategy"]
     total_requests = max(r["request_number"] for r in records)
-    total_success = sum(
-        1 for r in records if r["request_complete"] and r["request_success"]
-    )
+    total_success = sum(1 for r in records if r["request_complete"] and r["request_success"])
     total_attempts = len(records)
     total_retries = total_attempts - total_requests
     total_penalty = sum(1 for r in records if r["attempt_number"] > 3)

@@ -120,19 +120,21 @@ class CSVLogger:
                 return
             with open(self._current_path, "a", newline="") as f:
                 writer = csv.writer(f)
-                writer.writerow([
-                    record.session_id or self._current_session_id or "",
-                    record.request_number,
-                    record.attempt_number,
-                    record.request_id,
-                    record.strategy,
-                    record.timestamp,
-                    record.server_port,
-                    record.success,
-                    record.latency_ms,
-                    record.request_complete,
-                    record.request_success,
-                ])
+                writer.writerow(
+                    [
+                        record.session_id or self._current_session_id or "",
+                        record.request_number,
+                        record.attempt_number,
+                        record.request_id,
+                        record.strategy,
+                        record.timestamp,
+                        record.server_port,
+                        record.success,
+                        record.latency_ms,
+                        record.request_complete,
+                        record.request_success,
+                    ]
+                )
 
     def list_runs(self) -> list[RunInfo]:
         """List all available runs with metadata."""
@@ -148,16 +150,18 @@ class CSVLogger:
                 ended_at = records[-1]["timestamp"]
                 total_requests = max(r["request_number"] for r in records)
                 total_attempts = len(records)
-                runs.append(RunInfo(
-                    run_id=run_id,
-                    session_id=session_id,
-                    strategy=strategy,
-                    started_at=started_at,
-                    ended_at=ended_at,
-                    total_requests=total_requests,
-                    total_attempts=total_attempts,
-                    is_current=(run_id == self._current_run_id),
-                ))
+                runs.append(
+                    RunInfo(
+                        run_id=run_id,
+                        session_id=session_id,
+                        strategy=strategy,
+                        started_at=started_at,
+                        ended_at=ended_at,
+                        total_requests=total_requests,
+                        total_attempts=total_attempts,
+                        is_current=(run_id == self._current_run_id),
+                    )
+                )
         return runs
 
     def list_sessions(self) -> list[SessionInfo]:
@@ -178,13 +182,15 @@ class CSVLogger:
             # Sort runs by start time
             session_runs.sort(key=lambda r: r.started_at)
             strategies = [r.strategy for r in session_runs]
-            sessions.append(SessionInfo(
-                session_id=session_id,
-                runs=session_runs,
-                started_at=session_runs[0].started_at,
-                ended_at=session_runs[-1].ended_at,
-                strategies=strategies,
-            ))
+            sessions.append(
+                SessionInfo(
+                    session_id=session_id,
+                    runs=session_runs,
+                    started_at=session_runs[0].started_at,
+                    ended_at=session_runs[-1].ended_at,
+                    strategies=strategies,
+                )
+            )
 
         # Sort sessions by start time (most recent first)
         sessions.sort(key=lambda s: s.started_at, reverse=True)
@@ -213,19 +219,21 @@ class CSVLogger:
                 for row in reader:
                     # Handle both old files (without session_id) and new files
                     session_id = row.get("session_id", "") or None
-                    records.append({
-                        "session_id": session_id,
-                        "request_number": int(row["request_number"]),
-                        "attempt_number": int(row["attempt_number"]),
-                        "request_id": row["request_id"],
-                        "strategy": row["strategy"],
-                        "timestamp": float(row["timestamp"]),
-                        "server_port": int(row["server_port"]),
-                        "success": row["success"] == "True",
-                        "latency_ms": float(row["latency_ms"]),
-                        "request_complete": row["request_complete"] == "True",
-                        "request_success": row["request_success"] == "True",
-                    })
+                    records.append(
+                        {
+                            "session_id": session_id,
+                            "request_number": int(row["request_number"]),
+                            "attempt_number": int(row["attempt_number"]),
+                            "request_id": row["request_id"],
+                            "strategy": row["strategy"],
+                            "timestamp": float(row["timestamp"]),
+                            "server_port": int(row["server_port"]),
+                            "success": row["success"] == "True",
+                            "latency_ms": float(row["latency_ms"]),
+                            "request_complete": row["request_complete"] == "True",
+                            "request_success": row["request_success"] == "True",
+                        }
+                    )
             return records
 
     def reset(self) -> None:

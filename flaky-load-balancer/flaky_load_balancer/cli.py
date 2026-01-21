@@ -431,8 +431,7 @@ def cmd_start_dashboard(args) -> None:
     """Start just the dashboard dev server."""
     console.print(
         Panel.fit(
-            "[bold blue]Flaky Load Balancer Dashboard[/bold blue]\n"
-            "Starting Next.js dashboard at http://localhost:3000",
+            "[bold blue]Flaky Load Balancer Dashboard[/bold blue]\nStarting Next.js dashboard at http://localhost:3000",
             border_style="blue",
         )
     )
