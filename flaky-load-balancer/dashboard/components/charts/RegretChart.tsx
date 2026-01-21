@@ -9,6 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useShallow } from 'zustand/react/shallow';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import {
   TOOLTIP_CONTENT_STYLE,
@@ -27,11 +28,13 @@ interface DataPoint {
 }
 
 export function RegretChart() {
-  const { history, replayIndex, isLive } = useDashboardStore((state) => ({
-    history: state.history,
-    replayIndex: state.replayIndex,
-    isLive: state.isLive,
-  }));
+  const { history, replayIndex, isLive } = useDashboardStore(
+    useShallow((state) => ({
+      history: state.history,
+      replayIndex: state.replayIndex,
+      isLive: state.isLive,
+    }))
+  );
 
   // Get data up to current replay point
   const endIndex = isLive ? history.length : replayIndex + 1;

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useShallow } from 'zustand/react/shallow';
 import { Activity, Wifi, WifiOff, RefreshCw, Database, Zap, BarChart3, LayoutDashboard } from 'lucide-react';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { RunSelector } from '@/components/controls/RunSelector';
@@ -27,17 +28,19 @@ export function Header({ onRefresh, onSelectRun }: HeaderProps) {
     joinLiveRun,
     viewingRunId,
     currentRunId,
-  } = useDashboardStore((state) => ({
-    isConnected: state.isConnected,
-    currentStrategy: state.currentStrategy,
-    isLive: state.isLive,
-    hasHistoricalData: state.hasHistoricalData,
-    historyLength: state.history.length,
-    liveRunDetected: state.liveRunDetected,
-    joinLiveRun: state.joinLiveRun,
-    viewingRunId: state.viewingRunId,
-    currentRunId: state.currentRunId,
-  }));
+  } = useDashboardStore(
+    useShallow((state) => ({
+      isConnected: state.isConnected,
+      currentStrategy: state.currentStrategy,
+      isLive: state.isLive,
+      hasHistoricalData: state.hasHistoricalData,
+      historyLength: state.history.length,
+      liveRunDetected: state.liveRunDetected,
+      joinLiveRun: state.joinLiveRun,
+      viewingRunId: state.viewingRunId,
+      currentRunId: state.currentRunId,
+    }))
+  );
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 

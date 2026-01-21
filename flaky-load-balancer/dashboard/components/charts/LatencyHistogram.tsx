@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
+import { useShallow } from 'zustand/react/shallow';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import {
   TOOLTIP_CONTENT_STYLE,
@@ -68,11 +69,13 @@ function createHistogramBins(latencies: number[], numBins: number = 20): Histogr
 }
 
 export function LatencyHistogram() {
-  const { history, replayIndex, isLive } = useDashboardStore((state) => ({
-    history: state.history,
-    replayIndex: state.replayIndex,
-    isLive: state.isLive,
-  }));
+  const { history, replayIndex, isLive } = useDashboardStore(
+    useShallow((state) => ({
+      history: state.history,
+      replayIndex: state.replayIndex,
+      isLive: state.isLive,
+    }))
+  );
 
   // Get current snapshot based on live/replay state
   const snapshot = history.length === 0

@@ -9,6 +9,7 @@ import {
   ChevronFirst,
   ChevronLast,
 } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useReplay } from '@/hooks/useReplay';
 
@@ -28,19 +29,21 @@ export function ReplayControls() {
     setPlaybackSpeed,
     stepForward,
     stepBackward,
-  } = useDashboardStore((state) => ({
-    history: state.history,
-    replayIndex: state.replayIndex,
-    isLive: state.isLive,
-    isPlaying: state.isPlaying,
-    playbackSpeed: state.playbackSpeed,
-    goLive: state.goLive,
-    setReplayIndex: state.setReplayIndex,
-    togglePlayback: state.togglePlayback,
-    setPlaybackSpeed: state.setPlaybackSpeed,
-    stepForward: state.stepForward,
-    stepBackward: state.stepBackward,
-  }));
+  } = useDashboardStore(
+    useShallow((state) => ({
+      history: state.history,
+      replayIndex: state.replayIndex,
+      isLive: state.isLive,
+      isPlaying: state.isPlaying,
+      playbackSpeed: state.playbackSpeed,
+      goLive: state.goLive,
+      setReplayIndex: state.setReplayIndex,
+      togglePlayback: state.togglePlayback,
+      setPlaybackSpeed: state.setPlaybackSpeed,
+      stepForward: state.stepForward,
+      stepBackward: state.stepBackward,
+    }))
+  );
 
   const startTime = history[0]?.timestamp ?? 0;
   const currentTime = history[replayIndex]?.timestamp ?? 0;

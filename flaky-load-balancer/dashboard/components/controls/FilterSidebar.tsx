@@ -1,5 +1,6 @@
 'use client';
 
+import { useShallow } from 'zustand/react/shallow';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import type { ServerType } from '@/types/metrics';
 
@@ -10,10 +11,12 @@ const SERVER_TYPES: { type: ServerType; label: string; ports: string }[] = [
 ];
 
 export function FilterSidebar() {
-  const { selectedServerTypes, toggleServerType } = useDashboardStore((state) => ({
-    selectedServerTypes: state.selectedServerTypes,
-    toggleServerType: state.toggleServerType,
-  }));
+  const { selectedServerTypes, toggleServerType } = useDashboardStore(
+    useShallow((state) => ({
+      selectedServerTypes: state.selectedServerTypes,
+      toggleServerType: state.toggleServerType,
+    }))
+  );
 
   return (
     <div className="bg-slate-800 rounded-lg p-4">

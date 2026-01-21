@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { ChevronDown, Play, Clock, Database } from 'lucide-react';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { STRATEGY_NAMES, STRATEGY_COLORS, parseStrategyFromRunId } from '@/types/metrics';
@@ -14,11 +15,13 @@ export function RunSelector({ onSelectRun }: RunSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { availableRuns, currentRunId, viewingRunId } = useDashboardStore((state) => ({
-    availableRuns: state.availableRuns,
-    currentRunId: state.currentRunId,
-    viewingRunId: state.viewingRunId,
-  }));
+  const { availableRuns, currentRunId, viewingRunId } = useDashboardStore(
+    useShallow((state) => ({
+      availableRuns: state.availableRuns,
+      currentRunId: state.currentRunId,
+      viewingRunId: state.viewingRunId,
+    }))
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
