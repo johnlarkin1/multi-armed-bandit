@@ -11,6 +11,7 @@ import {
   ReferenceLine,
   Cell,
 } from 'recharts';
+import { useShallow } from 'zustand/react/shallow';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { getServerType, getHealthColor, type ServerType } from '@/types/metrics';
 import {
@@ -34,12 +35,14 @@ interface DataPoint {
 }
 
 export function ServerHealthChart() {
-  const { history, replayIndex, isLive, selectedServerTypes } = useDashboardStore((state) => ({
-    history: state.history,
-    replayIndex: state.replayIndex,
-    isLive: state.isLive,
-    selectedServerTypes: state.selectedServerTypes,
-  }));
+  const { history, replayIndex, isLive, selectedServerTypes } = useDashboardStore(
+    useShallow((state) => ({
+      history: state.history,
+      replayIndex: state.replayIndex,
+      isLive: state.isLive,
+      selectedServerTypes: state.selectedServerTypes,
+    }))
+  );
 
   // Get current snapshot based on live/replay state
   const snapshot = history.length === 0

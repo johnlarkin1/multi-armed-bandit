@@ -5,3 +5,5 @@ flaky-load-balancer/resources/failingserver
 **/*.pyc
 __pycache__/
 *.py[cod]
+
+flaky-load-balancer/runs/

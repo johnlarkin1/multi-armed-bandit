@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import type { MetricsSnapshot, RunInfo, Strategy } from '@/types/metrics';
 
@@ -31,16 +32,18 @@ export function useMetricsSSE() {
     loadFromHistory,
     setAvailableRuns,
     setCurrentRunId,
-  } = useDashboardStore((state) => ({
-    viewingRunId: state.viewingRunId,
-    setConnected: state.setConnected,
-    setStrategy: state.setStrategy,
-    addSnapshot: state.addSnapshot,
-    clearHistory: state.clearHistory,
-    loadFromHistory: state.loadFromHistory,
-    setAvailableRuns: state.setAvailableRuns,
-    setCurrentRunId: state.setCurrentRunId,
-  }));
+  } = useDashboardStore(
+    useShallow((state) => ({
+      viewingRunId: state.viewingRunId,
+      setConnected: state.setConnected,
+      setStrategy: state.setStrategy,
+      addSnapshot: state.addSnapshot,
+      clearHistory: state.clearHistory,
+      loadFromHistory: state.loadFromHistory,
+      setAvailableRuns: state.setAvailableRuns,
+      setCurrentRunId: state.setCurrentRunId,
+    }))
+  );
 
   // Fetch list of available runs
   const fetchRuns = useCallback(async (): Promise<RunsResponse | null> => {
