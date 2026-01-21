@@ -81,4 +81,4 @@ Select strategy via `LB_STRATEGY` env var: `v1_larkin`, `v2_ucb`, `v3_ucb_modifi
 
 ## External Dependencies
 
-The `failingserver` binary (in repo root) provides the flaky downstream servers for testing.
+The `failingserver` binary (in `flaky-load-balancer/resources/`) provides the flaky downstream servers for testing.

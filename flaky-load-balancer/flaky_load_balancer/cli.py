@@ -31,8 +31,8 @@ DASHBOARD_PATH = Path(__file__).parent.parent / "dashboard"
 # Ports for T1 servers
 T1_PORTS = list(range(4000, 4010))
 
-# Path to failingserver binary (relative to project root)
-FAILINGSERVER_PATH = Path(__file__).parent.parent.parent.parent / "failingserver"
+# Path to failingserver binary (in resources directory)
+FAILINGSERVER_PATH = Path(__file__).parent.parent / "resources" / "failingserver"
 
 
 def collect_metrics_snapshot() -> dict | None:

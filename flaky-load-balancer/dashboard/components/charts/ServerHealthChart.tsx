@@ -21,7 +21,6 @@ import {
   AXIS_FONT_SIZE,
   AXIS_FONT_SIZE_SMALL,
   CHART_COLORS,
-  REFERENCE_LINE_DASH_ARRAY,
   REFERENCE_LINE_OPACITY,
   CHART_MARGINS,
 } from '@/constants/chartStyles';
@@ -75,8 +74,8 @@ export function ServerHealthChart() {
   const formatPercent = (v: number) => `${v}%`;
   const formatTooltipValue = (
     value: number | undefined,
-    _name: string,
-    props: { payload?: DataPoint }
+    _name: string | undefined,
+    props: { payload?: DataPoint } | undefined
   ): [string, string] => {
     const payload = props?.payload;
     const val = value ?? 0;
