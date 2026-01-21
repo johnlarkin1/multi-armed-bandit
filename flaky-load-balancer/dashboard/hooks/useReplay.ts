@@ -2,18 +2,19 @@
 
 import { useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/stores/dashboardStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export function useReplay() {
   const intervalRef = useRef<number | null>(null);
 
   const { isPlaying, playbackSpeed, historyLength, replayIndex, stepForward } = useDashboardStore(
-    (state) => ({
+    useShallow((state) => ({
       isPlaying: state.isPlaying,
       playbackSpeed: state.playbackSpeed,
       historyLength: state.history.length,
       replayIndex: state.replayIndex,
       stepForward: state.stepForward,
-    })
+    }))
   );
 
   useEffect(() => {
