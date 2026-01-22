@@ -5,6 +5,7 @@
 
 import { AttemptRecord } from './csv-reader';
 import { SNAPSHOT_WINDOW_SIZE } from './config';
+import type { ServerType, PerConfigMetrics } from '@/types/metrics';
 
 export interface PerServerMetrics {
   port: number;
@@ -31,6 +32,7 @@ export interface MetricsSnapshot {
   latency_p99: number;
   latencies: number[];
   per_server: Record<string, PerServerMetrics>;
+  per_config: Record<ServerType, PerConfigMetrics>;
   last_update: number;
 }
 
@@ -40,6 +42,16 @@ interface PerServerAccumulator {
   num_success: number;
   num_failure: number;
   total_latency_ms: number;
+}
+
+interface PerConfigAccumulator {
+  config: ServerType;
+  total_requests: number;
+  total_success: number;
+  total_failure: number;
+  total_retries: number;
+  total_penalty: number;
+  latencies: number[];
 }
 
 /**
@@ -65,6 +77,57 @@ function percentile99(arr: number[]): number {
 }
 
 /**
+ * Build per-config metrics from accumulator.
+ */
+function buildPerConfigMetrics(
+  perConfig: Map<ServerType, PerConfigAccumulator>
+): Record<ServerType, PerConfigMetrics> {
+  const result: Partial<Record<ServerType, PerConfigMetrics>> = {};
+
+  for (const configType of ['T1', 'T2', 'T3'] as ServerType[]) {
+    const acc = perConfig.get(configType);
+    if (acc) {
+      const successRate = acc.total_requests > 0 ? acc.total_success / acc.total_requests : 0;
+      const globalRegret = acc.total_requests - acc.total_success;
+      const score = acc.total_success - acc.total_penalty;
+      const latencyP50 = acc.latencies.length > 0 ? median(acc.latencies) : 0;
+      const latencyP99 = acc.latencies.length > 0 ? percentile99(acc.latencies) : 0;
+
+      result[configType] = {
+        config: configType,
+        total_requests: acc.total_requests,
+        total_success: acc.total_success,
+        total_failure: acc.total_failure,
+        total_retries: acc.total_retries,
+        total_penalty: acc.total_penalty,
+        success_rate: Math.round(successRate * 10000) / 10000,
+        global_regret: globalRegret,
+        score,
+        latency_p50: Math.round(latencyP50 * 100) / 100,
+        latency_p99: Math.round(latencyP99 * 100) / 100,
+      };
+    } else {
+      // Create empty metrics for missing config
+      result[configType] = {
+        config: configType,
+        total_requests: 0,
+        total_success: 0,
+        total_failure: 0,
+        total_retries: 0,
+        total_penalty: 0,
+        success_rate: 0,
+        global_regret: 0,
+        score: 0,
+        latency_p50: 0,
+        latency_p99: 0,
+      };
+    }
+  }
+
+  return result as Record<ServerType, PerConfigMetrics>;
+}
+
+/**
  * Build a single snapshot from accumulated metrics.
  */
 function buildSnapshot(
@@ -77,7 +140,8 @@ function buildSnapshot(
   totalRetries: number,
   totalPenalty: number,
   latencies: number[],
-  perServer: Map<number, PerServerAccumulator>
+  perServer: Map<number, PerServerAccumulator>,
+  perConfig: Map<ServerType, PerConfigAccumulator>
 ): MetricsSnapshot {
   const latencyP50 = latencies.length > 0 ? median(latencies) : 0;
   const latencyP99 = latencies.length > 0 ? percentile99(latencies) : 0;
@@ -113,8 +177,25 @@ function buildSnapshot(
     latency_p99: Math.round(latencyP99 * 100) / 100,
     latencies: latencies.map((l) => Math.round(l * 100) / 100),
     per_server: perServerOut,
+    per_config: buildPerConfigMetrics(perConfig),
     last_update: timestamp,
   };
+}
+
+/**
+ * Deep clone a per-config accumulator map.
+ */
+function clonePerConfig(
+  perConfig: Map<ServerType, PerConfigAccumulator>
+): Map<ServerType, PerConfigAccumulator> {
+  const cloned = new Map<ServerType, PerConfigAccumulator>();
+  for (const [key, value] of perConfig) {
+    cloned.set(key, {
+      ...value,
+      latencies: [...value.latencies],
+    });
+  }
+  return cloned;
 }
 
 /**
@@ -141,6 +222,7 @@ export function buildSnapshotsFromRecords(
   let totalPenalty = 0;
   const latencies: number[] = [];
   const perServer = new Map<number, PerServerAccumulator>();
+  const perConfig = new Map<ServerType, PerConfigAccumulator>();
 
   let currentWindowStart = startTime;
   let pendingRecords: AttemptRecord[] = [];
@@ -160,7 +242,8 @@ export function buildSnapshotsFromRecords(
           totalRetries,
           totalPenalty,
           [...latencies],
-          new Map(perServer)
+          new Map(perServer),
+          clonePerConfig(perConfig)
         );
         snapshots.push(snapshot);
         pendingRecords = [];
@@ -188,6 +271,38 @@ export function buildSnapshotsFromRecords(
       serverStats.num_success += 1;
     } else {
       serverStats.num_failure += 1;
+    }
+
+    // Update per-config stats
+    const configType = record.config_target;
+    if (!perConfig.has(configType)) {
+      perConfig.set(configType, {
+        config: configType,
+        total_requests: 0,
+        total_success: 0,
+        total_failure: 0,
+        total_retries: 0,
+        total_penalty: 0,
+        latencies: [],
+      });
+    }
+
+    const configStats = perConfig.get(configType)!;
+    configStats.latencies.push(record.latency_ms);
+
+    if (record.attempt_number > 1) {
+      configStats.total_retries += 1;
+    }
+    if (record.attempt_number > 3) {
+      configStats.total_penalty += 1;
+    }
+    if (record.request_complete) {
+      configStats.total_requests += 1;
+      if (record.request_success) {
+        configStats.total_success += 1;
+      } else {
+        configStats.total_failure += 1;
+      }
     }
 
     // Update global stats
@@ -223,7 +338,8 @@ export function buildSnapshotsFromRecords(
       totalRetries,
       totalPenalty,
       latencies,
-      perServer
+      perServer,
+      perConfig
     );
     snapshots.push(snapshot);
   }
@@ -253,6 +369,42 @@ export function computeRunSummary(records: AttemptRecord[]): Record<string, unkn
   const successRate = totalRequests > 0 ? totalSuccess / totalRequests : 0;
   const score = totalSuccess - totalPenalty;
 
+  // Compute per-config metrics
+  const perConfig = new Map<ServerType, PerConfigAccumulator>();
+
+  for (const record of records) {
+    const configType = record.config_target;
+    if (!perConfig.has(configType)) {
+      perConfig.set(configType, {
+        config: configType,
+        total_requests: 0,
+        total_success: 0,
+        total_failure: 0,
+        total_retries: 0,
+        total_penalty: 0,
+        latencies: [],
+      });
+    }
+
+    const configStats = perConfig.get(configType)!;
+    configStats.latencies.push(record.latency_ms);
+
+    if (record.attempt_number > 1) {
+      configStats.total_retries += 1;
+    }
+    if (record.attempt_number > 3) {
+      configStats.total_penalty += 1;
+    }
+    if (record.request_complete) {
+      configStats.total_requests += 1;
+      if (record.request_success) {
+        configStats.total_success += 1;
+      } else {
+        configStats.total_failure += 1;
+      }
+    }
+  }
+
   return {
     strategy,
     total_requests: totalRequests,
@@ -263,5 +415,6 @@ export function computeRunSummary(records: AttemptRecord[]): Record<string, unkn
     total_penalty: totalPenalty,
     latency_p50: Math.round(latencyP50 * 100) / 100,
     latency_p99: Math.round(latencyP99 * 100) / 100,
+    per_config: buildPerConfigMetrics(perConfig),
   };
 }

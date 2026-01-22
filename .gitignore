@@ -7,3 +7,4 @@ __pycache__/
 *.py[cod]
 
 flaky-load-balancer/runs/
+flaky-load-balancer/metrics.json

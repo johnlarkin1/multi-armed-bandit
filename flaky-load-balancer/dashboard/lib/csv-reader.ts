@@ -5,6 +5,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { RUNS_DIR } from './config';
+import { ServerType, getServerType } from '@/types/metrics';
 
 export interface AttemptRecord {
   session_id: string | null;
@@ -18,6 +19,7 @@ export interface AttemptRecord {
   latency_ms: number;
   request_complete: boolean;
   request_success: boolean;
+  config_target: ServerType;
 }
 
 export interface RunInfo {
@@ -74,7 +76,9 @@ function parseCSVLine(line: string): string[] {
  * Parse a CSV file into an array of records.
  */
 function parseCSV(content: string): AttemptRecord[] {
-  const lines = content.trim().split('\n');
+  // Normalize line endings (handle CRLF from Windows-style files)
+  const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalizedContent.trim().split('\n');
   if (lines.length < 2) return [];
 
   const headers = parseCSVLine(lines[0]);
@@ -89,6 +93,7 @@ function parseCSV(content: string): AttemptRecord[] {
       row[header] = values[index];
     });
 
+    const serverPort = parseInt(row.server_port, 10);
     records.push({
       session_id: row.session_id || null,
       request_number: parseInt(row.request_number, 10),
@@ -96,11 +101,12 @@ function parseCSV(content: string): AttemptRecord[] {
       request_id: row.request_id,
       strategy: row.strategy,
       timestamp: parseFloat(row.timestamp),
-      server_port: parseInt(row.server_port, 10),
+      server_port: serverPort,
       success: row.success === 'True',
       latency_ms: parseFloat(row.latency_ms),
       request_complete: row.request_complete === 'True',
       request_success: row.request_success === 'True',
+      config_target: getServerType(serverPort),
     });
   }
 
