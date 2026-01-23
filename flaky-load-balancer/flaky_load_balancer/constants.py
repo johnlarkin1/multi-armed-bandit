@@ -27,6 +27,9 @@ class ServerStats:
     # Initialized to 1 for uniform prior Beta(1,1)
     alpha: float = 1.0
     beta: float = 1.0
+    # Rate limit tracking
+    num_rate_limited: int = 0
+    last_rate_limited_at: float | None = None
 
     @property
     def beta_variance(self) -> float:

@@ -67,7 +67,7 @@ export function StatsPanel() {
       <MetricCard
         label="Total Requests"
         value={snapshot.total_requests.toLocaleString()}
-        subValue={`${snapshot.total_retries} retries`}
+        subValue={`${snapshot.total_retries} retries${snapshot.total_rate_limited ? ` • ${snapshot.total_rate_limited} rate-limited` : ''}`}
       />
       <MetricCard
         label="Success Rate"

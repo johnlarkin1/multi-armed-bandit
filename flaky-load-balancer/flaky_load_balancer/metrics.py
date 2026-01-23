@@ -18,6 +18,7 @@ class ServerMetrics:
     num_requests: int = 0
     num_success: int = 0
     num_failure: int = 0
+    num_rate_limited: int = 0
     total_latency_ms: float = 0.0
 
     @property
@@ -38,6 +39,7 @@ class ServerMetrics:
             "num_requests": self.num_requests,
             "num_success": self.num_success,
             "num_failure": self.num_failure,
+            "num_rate_limited": self.num_rate_limited,
             "success_rate": round(self.success_rate, 4),
             "avg_latency_ms": round(self.avg_latency_ms, 2),
         }
@@ -52,6 +54,7 @@ class Metrics:
     total_success: int = 0
     total_failure: int = 0
     total_retries: int = 0
+    total_rate_limited: int = 0
 
     # Penalty tracking (attempts > 3 per request)
     total_penalty: int = 0
@@ -96,6 +99,7 @@ class Metrics:
             "total_success": self.total_success,
             "total_failure": self.total_failure,
             "total_retries": self.total_retries,
+            "total_rate_limited": self.total_rate_limited,
             "total_penalty": self.total_penalty,
             "global_regret": self.global_regret,
             "best_guess_score": self.best_guess_score,
@@ -123,6 +127,7 @@ class MetricsCollector:
         success: bool,
         latency_ms: float,
         attempt: int,
+        rate_limited: bool = False,
     ) -> None:
         """Record metrics for a single request attempt.
 
@@ -131,6 +136,7 @@ class MetricsCollector:
             success: Whether the request succeeded
             latency_ms: Request latency in milliseconds
             attempt: Which attempt this was (0-indexed)
+            rate_limited: Whether the request was rate-limited (429)
         """
         # Update per-server metrics
         if port not in self.metrics.per_server:
@@ -139,7 +145,10 @@ class MetricsCollector:
         server_metrics = self.metrics.per_server[port]
         server_metrics.num_requests += 1
         server_metrics.total_latency_ms += latency_ms
-        if success:
+        if rate_limited:
+            server_metrics.num_rate_limited += 1
+            self.metrics.total_rate_limited += 1
+        elif success:
             server_metrics.num_success += 1
         else:
             server_metrics.num_failure += 1

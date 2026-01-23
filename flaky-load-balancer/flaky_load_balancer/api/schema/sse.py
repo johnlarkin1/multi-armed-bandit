@@ -29,6 +29,7 @@ class SnapshotResponse(BaseModel):
     total_failure: int = 0
     total_retries: int = 0
     total_penalty: int = 0
+    total_rate_limited: int = 0
     global_regret: int = 0
     best_guess_score: int = 0
     latency_p50: float = 0.0
