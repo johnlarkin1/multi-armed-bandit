@@ -29,7 +29,6 @@ class LarkinIntuitionStrategy(BaseStrategy):
 
     @property
     def in_discover_mode(self) -> bool:
-        """Check if we're still in the discovery phase."""
         return self._total_requests < DISCOVER_LIMIT
 
     def select_server(self, excluded: set[int] | None = None, attempt: int = 0) -> int:
@@ -50,7 +49,9 @@ class LarkinIntuitionStrategy(BaseStrategy):
             self._total_requests += 1
 
         excluded = excluded or set()
-        target_ports = [p for p in self.get_ports(self._config_target) if p not in excluded]
+        target_ports = [
+            p for p in self.get_ports(self._config_target) if p not in excluded
+        ]
 
         if not target_ports:
             # All servers excluded, fall back to best server overall
