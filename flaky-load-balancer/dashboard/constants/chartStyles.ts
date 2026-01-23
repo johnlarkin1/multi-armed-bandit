@@ -12,6 +12,11 @@ export const TOOLTIP_CONTENT_STYLE: CSSProperties = {
   borderRadius: '6px',
 };
 
+// Tooltip item text style for dark mode readability
+export const TOOLTIP_ITEM_STYLE: CSSProperties = {
+  color: '#e2e8f0', // slate-200 for readability
+};
+
 // CartesianGrid styling
 export const GRID_STROKE = '#334155';
 export const GRID_DASH_ARRAY = '3 3';

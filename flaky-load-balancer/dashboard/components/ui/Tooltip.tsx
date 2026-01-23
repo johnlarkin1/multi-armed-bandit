@@ -25,13 +25,13 @@ export function Tooltip({ content }: TooltipProps) {
       </button>
 
       {isVisible && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50">
-          <div className="bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-md shadow-lg whitespace-nowrap border border-slate-700">
-            {content}
-          </div>
+        <div className="absolute top-full right-1/2 translate-x-1/2 mt-2 z-50">
           {/* Arrow */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-            <div className="border-4 border-transparent border-t-slate-900" />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-px">
+            <div className="border-4 border-transparent border-b-slate-900" />
+          </div>
+          <div className="bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-md shadow-lg max-w-[128px] w-max text-center border border-slate-700">
+            {content}
           </div>
         </div>
       )}

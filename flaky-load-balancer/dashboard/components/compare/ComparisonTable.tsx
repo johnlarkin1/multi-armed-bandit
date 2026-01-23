@@ -149,39 +149,51 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
               <th className="text-left py-3 px-4 font-medium text-slate-300 w-8"></th>
               <th className="text-left py-3 px-4 font-medium text-slate-300">Strategy</th>
               <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="flex items-center gap-1 justify-end">
+                <span className="relative inline-block pr-5">
                   Score
-                  <Tooltip content={METRIC_TOOLTIPS.score} />
+                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
+                    <Tooltip content={METRIC_TOOLTIPS.score} />
+                  </span>
                 </span>
               </th>
               <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="flex items-center gap-1 justify-end">
+                <span className="relative inline-block pr-5">
                   Success Rate
-                  <Tooltip content={METRIC_TOOLTIPS.successRate} />
+                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
+                    <Tooltip content={METRIC_TOOLTIPS.successRate} />
+                  </span>
                 </span>
               </th>
               <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="flex items-center gap-1 justify-end">
+                <span className="relative inline-block pr-5">
                   Latency P50
-                  <Tooltip content={METRIC_TOOLTIPS.latencyP50} />
+                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
+                    <Tooltip content={METRIC_TOOLTIPS.latencyP50} />
+                  </span>
                 </span>
               </th>
               <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="flex items-center gap-1 justify-end">
+                <span className="relative inline-block pr-5">
                   Latency P99
-                  <Tooltip content={METRIC_TOOLTIPS.latencyP99} />
+                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
+                    <Tooltip content={METRIC_TOOLTIPS.latencyP99} />
+                  </span>
                 </span>
               </th>
               <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="flex items-center gap-1 justify-end">
+                <span className="relative inline-block pr-5">
                   Retries
-                  <Tooltip content={METRIC_TOOLTIPS.retries} />
+                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
+                    <Tooltip content={METRIC_TOOLTIPS.retries} />
+                  </span>
                 </span>
               </th>
               <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="flex items-center gap-1 justify-end">
+                <span className="relative inline-block pr-5">
                   Penalty
-                  <Tooltip content={METRIC_TOOLTIPS.penalty} />
+                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
+                    <Tooltip content={METRIC_TOOLTIPS.penalty} />
+                  </span>
                 </span>
               </th>
             </tr>
