@@ -5,6 +5,16 @@ import { Trophy, TrendingUp, TrendingDown, ChevronDown, ChevronRight } from 'luc
 import type { RunSummary, ServerType, PerConfigMetrics } from '@/types/metrics';
 import { STRATEGY_NAMES, STRATEGY_COLORS, CONFIG_COLORS, isStrategy } from '@/types/metrics';
 import { withOpacity } from '@/constants/chartStyles';
+import { Tooltip } from '@/components/ui/Tooltip';
+
+const METRIC_TOOLTIPS = {
+  score: 'Successful Requests - Penalty Retries. Higher is better.',
+  successRate: 'Percentage of requests that succeeded (after up to 10 retry attempts).',
+  latencyP50: 'Median response time across all attempts.',
+  latencyP99: '99th percentile response time (slowest 1% of attempts).',
+  retries: 'Total retry attempts (excludes initial attempt per request).',
+  penalty: 'Attempts beyond the first 3 penalty-free tries. Each costs 0.5 points.',
+};
 
 interface ComparisonTableProps {
   data: RunSummary[];
@@ -138,12 +148,42 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
             <tr className="border-b border-slate-700">
               <th className="text-left py-3 px-4 font-medium text-slate-300 w-8"></th>
               <th className="text-left py-3 px-4 font-medium text-slate-300">Strategy</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Score</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Success Rate</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Latency P50</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Latency P99</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Retries</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Penalty</th>
+              <th className="text-right py-3 px-4 font-medium text-slate-300">
+                <span className="flex items-center gap-1 justify-end">
+                  Score
+                  <Tooltip content={METRIC_TOOLTIPS.score} />
+                </span>
+              </th>
+              <th className="text-right py-3 px-4 font-medium text-slate-300">
+                <span className="flex items-center gap-1 justify-end">
+                  Success Rate
+                  <Tooltip content={METRIC_TOOLTIPS.successRate} />
+                </span>
+              </th>
+              <th className="text-right py-3 px-4 font-medium text-slate-300">
+                <span className="flex items-center gap-1 justify-end">
+                  Latency P50
+                  <Tooltip content={METRIC_TOOLTIPS.latencyP50} />
+                </span>
+              </th>
+              <th className="text-right py-3 px-4 font-medium text-slate-300">
+                <span className="flex items-center gap-1 justify-end">
+                  Latency P99
+                  <Tooltip content={METRIC_TOOLTIPS.latencyP99} />
+                </span>
+              </th>
+              <th className="text-right py-3 px-4 font-medium text-slate-300">
+                <span className="flex items-center gap-1 justify-end">
+                  Retries
+                  <Tooltip content={METRIC_TOOLTIPS.retries} />
+                </span>
+              </th>
+              <th className="text-right py-3 px-4 font-medium text-slate-300">
+                <span className="flex items-center gap-1 justify-end">
+                  Penalty
+                  <Tooltip content={METRIC_TOOLTIPS.penalty} />
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
