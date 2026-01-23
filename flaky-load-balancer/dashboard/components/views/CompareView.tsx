@@ -6,6 +6,7 @@ import { ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
 import { useCompare } from '@/hooks/useCompare';
 import { SessionSelector } from '@/components/compare/SessionSelector';
 import { ComparisonTable } from '@/components/compare/ComparisonTable';
+import { ConfigComparisonTable } from '@/components/compare/ConfigComparisonTable';
 import { ComparisonCharts } from '@/components/compare/ComparisonCharts';
 
 interface CompareViewProps {
@@ -96,6 +97,7 @@ export function CompareView({ sessionId }: CompareViewProps) {
       {sessionId && comparisonData.length > 0 && (
         <>
           <ComparisonTable data={comparisonData} />
+          <ConfigComparisonTable data={comparisonData} />
           <ComparisonCharts data={comparisonData} />
         </>
       )}

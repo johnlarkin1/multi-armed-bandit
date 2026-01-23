@@ -28,6 +28,7 @@ interface ComparisonChartsProps {
 }
 
 interface OverallChartData {
+  run_id: string;
   strategy: string;
   fullStrategy: string;
   score: number;
@@ -39,6 +40,7 @@ interface OverallChartData {
 }
 
 interface ConfigChartData {
+  run_id: string;
   strategy: string;
   fullStrategy: string;
   T1_score: number;
@@ -75,6 +77,7 @@ export function ComparisonCharts({ data }: ComparisonChartsProps) {
 
   // Overall data for single-bar charts
   const overallData: OverallChartData[] = data.map((run) => ({
+    run_id: run.run_id,
     strategy: getStrategyKey(run.strategy).toUpperCase(),
     fullStrategy: run.strategy,
     score: run.score,
@@ -105,6 +108,7 @@ export function ComparisonCharts({ data }: ComparisonChartsProps) {
     };
 
     return {
+      run_id: run.run_id,
       strategy: getStrategyKey(run.strategy).toUpperCase(),
       fullStrategy: run.strategy,
       T1_score: getConfigMetric('T1', 'score'),
@@ -153,8 +157,8 @@ export function ComparisonCharts({ data }: ComparisonChartsProps) {
                   labelStyle={{ color: AXIS_STROKE }}
                 />
                 <Bar dataKey="score" name="Score" radius={[4, 4, 0, 0]}>
-                  {overallData.map((entry, index) => (
-                    <Cell key={index} fill={getColor(entry.fullStrategy)} />
+                  {overallData.map((entry) => (
+                    <Cell key={entry.run_id} fill={getColor(entry.fullStrategy)} />
                   ))}
                 </Bar>
               </BarChart>
@@ -190,8 +194,8 @@ export function ComparisonCharts({ data }: ComparisonChartsProps) {
                   labelStyle={{ color: AXIS_STROKE }}
                 />
                 <Bar dataKey="successRate" name="Success Rate" radius={[4, 4, 0, 0]}>
-                  {overallData.map((entry, index) => (
-                    <Cell key={index} fill={getColor(entry.fullStrategy)} />
+                  {overallData.map((entry) => (
+                    <Cell key={entry.run_id} fill={getColor(entry.fullStrategy)} />
                   ))}
                 </Bar>
               </BarChart>

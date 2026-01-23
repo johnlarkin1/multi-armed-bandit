@@ -10,7 +10,8 @@
       "Bash(make:*)",
       "Bash(npm run lint)",
       "Skill(generate-pr)",
-      "Bash(uv run ruff:*)"
+      "Bash(uv run ruff:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
