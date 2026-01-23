@@ -20,7 +20,9 @@ from flaky_load_balancer.api.schema.history import ServerMetricsResponse
 router = APIRouter()
 
 
-def format_sse_event(event_type: str, data: SSEConnectedEvent | SSEMetricsEvent | dict) -> str:
+def format_sse_event(
+    event_type: str, data: SSEConnectedEvent | SSEMetricsEvent | dict
+) -> str:
     if isinstance(data, dict):
         json_data = orjson.dumps(data).decode()
     else:

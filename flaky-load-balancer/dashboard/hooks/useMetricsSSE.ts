@@ -8,6 +8,7 @@ import type { MetricsSnapshot, RunInfo, Strategy } from '@/types/metrics';
 const SSE_URL = '/api/events';
 const HISTORY_URL = '/api/history/snapshots';
 const RUNS_URL = '/api/runs';
+const SSE_RETRY_DELAY_MS = 3000; // Retry SSE connection every 3 seconds when unavailable
 
 interface HistoryResponse {
   snapshots: MetricsSnapshot[];
@@ -22,6 +23,7 @@ interface RunsResponse {
 
 export function useMetricsSSE() {
   const eventSourceRef = useRef<EventSource | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     viewingRunId,
@@ -32,6 +34,7 @@ export function useMetricsSSE() {
     loadFromHistory,
     setAvailableRuns,
     setCurrentRunId,
+    goLive,
   } = useDashboardStore(
     useShallow((state) => ({
       viewingRunId: state.viewingRunId,
@@ -42,6 +45,7 @@ export function useMetricsSSE() {
       loadFromHistory: state.loadFromHistory,
       setAvailableRuns: state.setAvailableRuns,
       setCurrentRunId: state.setCurrentRunId,
+      goLive: state.goLive,
     }))
   );
 
@@ -103,6 +107,12 @@ export function useMetricsSSE() {
         clearHistory();
       }
       setStrategy(newStrategy);
+
+      // Auto-go-live if we're viewing the same run that's now live
+      const currentViewingRunId = useDashboardStore.getState().viewingRunId;
+      if (!currentViewingRunId || currentViewingRunId === newRunId) {
+        goLive();
+      }
     });
 
     eventSource.addEventListener('metrics', (event) => {
@@ -127,7 +137,7 @@ export function useMetricsSSE() {
     };
 
     return eventSource;
-  }, [setConnected, setStrategy, addSnapshot, clearHistory, setCurrentRunId]);
+  }, [setConnected, setStrategy, addSnapshot, clearHistory, setCurrentRunId, goLive]);
 
   // Effect to load a specific run when viewingRunId changes
   useEffect(() => {

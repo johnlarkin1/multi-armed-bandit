@@ -2,7 +2,7 @@
         lint lint-python lint-typescript \
         format fmt format-python \
         typecheck typecheck-python typecheck-typescript \
-        harness dashboard dashboard-build servers \
+        harness lb server dashboard dashboard-build servers \
         clean clean-runs favicon
 
 # Default target - show help
@@ -71,6 +71,11 @@ format-python: ## Format Python code with ruff
 
 harness: ## Run the full test harness (servers + LB + dashboard + tests)
 	cd $(FLB_DIR) && uv run flb start harness
+
+lb: ## Start just the FastAPI load balancer server
+	cd $(FLB_DIR) && LB_STRATEGY=v4 uv run uvicorn flaky_load_balancer.main:app --reload
+
+server: lb ## Alias for 'lb'
 
 dashboard: ## Start the Next.js dashboard dev server
 	cd $(FLB_DIR) && uv run flb start dashboard
