@@ -21,6 +21,7 @@ CSV_HEADERS = [
     "latency_ms",
     "request_complete",
     "request_success",
+    "rate_limited",
 ]
 
 
@@ -40,6 +41,7 @@ class AttemptRecord:
     latency_ms: float
     request_complete: bool
     request_success: bool
+    rate_limited: bool = False
 
 
 @dataclass
@@ -81,9 +83,7 @@ class CSVLogger:
         self._current_strategy: str | None = None
         RUNS_DIR.mkdir(exist_ok=True)
 
-    def start_new_run(
-        self, strategy: str, session_id: str | None = None, config_target: str = "T1"
-    ) -> str:
+    def start_new_run(self, strategy: str, session_id: str | None = None, config_target: str = "T1") -> str:
         """Start a new run with a unique ID. Returns the run_id."""
         with self._lock:
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -146,6 +146,7 @@ class CSVLogger:
                         record.latency_ms,
                         record.request_complete,
                         record.request_success,
+                        record.rate_limited,
                     ]
                 )
 
@@ -232,9 +233,10 @@ class CSVLogger:
             with open(path, "r", newline="") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    # Handle both old files (without session_id/config_target) and new files
+                    # Handle both old files (without session_id/config_target/rate_limited) and new files
                     session_id = row.get("session_id", "") or None
                     config_target = row.get("config_target", "") or "T1"
+                    rate_limited = row.get("rate_limited", "False") == "True"
                     records.append(
                         {
                             "session_id": session_id,
@@ -249,6 +251,7 @@ class CSVLogger:
                             "latency_ms": float(row["latency_ms"]),
                             "request_complete": row["request_complete"] == "True",
                             "request_success": row["request_success"] == "True",
+                            "rate_limited": rate_limited,
                         }
                     )
             return records

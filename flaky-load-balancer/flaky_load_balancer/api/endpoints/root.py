@@ -10,7 +10,7 @@ from flaky_load_balancer.constants import (
     ROOT_ENDPOINT,
 )
 from flaky_load_balancer.csv_logger import AttemptRecord, get_csv_logger
-from flaky_load_balancer.http_client import send_request
+from flaky_load_balancer.http_client import RequestOutcome, send_request
 from flaky_load_balancer.metrics import get_metrics_collector
 from flaky_load_balancer.strategies.factory import get_current_strategy
 
@@ -45,9 +45,23 @@ async def post_root(request: RootRequest) -> RootResponse:
             port = strategy.get_best_server()
 
         timestamp = time.time()
-        success, latency = await send_request(port, request.id)
-        strategy.update(port, success, latency)
-        metrics.record_request(port, success, latency, attempt)
+        result = await send_request(port, request.id)
+        success = result.outcome == RequestOutcome.SUCCESS
+        rate_limited = result.outcome == RequestOutcome.RATE_LIMITED
+        latency = result.latency_ms
+
+        # Update strategy based on outcome
+        if rate_limited:
+            # Use rate-limit-aware update if available
+            if hasattr(strategy, "update_rate_limited"):
+                strategy.update_rate_limited(port, latency)
+            else:
+                # Fallback for legacy strategies: treat as failure
+                strategy.update(port, False, latency)
+        else:
+            strategy.update(port, success, latency)
+
+        metrics.record_request(port, success, latency, attempt, rate_limited=rate_limited)
 
         is_final_attempt = success or attempt == MAX_ATTEMPTS - 1
         csv_logger.log_attempt(
@@ -64,6 +78,7 @@ async def post_root(request: RootRequest) -> RootResponse:
                 latency_ms=latency,
                 request_complete=is_final_attempt,
                 request_success=success if is_final_attempt else False,
+                rate_limited=rate_limited,
             )
         )
 
