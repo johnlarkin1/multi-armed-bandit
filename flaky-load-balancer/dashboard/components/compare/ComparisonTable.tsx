@@ -147,53 +147,41 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
           <thead>
             <tr className="border-b border-slate-700">
               <th className="text-left py-3 px-4 font-medium text-slate-300 w-8"></th>
-              <th className="text-left py-3 px-4 font-medium text-slate-300">Strategy</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="relative inline-block pr-5">
+              <th className="text-left py-3 px-4 font-medium text-slate-300 w-120">Strategy</th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
                   Score
-                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
-                    <Tooltip content={METRIC_TOOLTIPS.score} />
-                  </span>
+                  <Tooltip content={METRIC_TOOLTIPS.score} />
                 </span>
               </th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="relative inline-block pr-5">
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
                   Success Rate
-                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
-                    <Tooltip content={METRIC_TOOLTIPS.successRate} />
-                  </span>
+                  <Tooltip content={METRIC_TOOLTIPS.successRate} />
                 </span>
               </th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="relative inline-block pr-5">
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
                   Latency P50
-                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
-                    <Tooltip content={METRIC_TOOLTIPS.latencyP50} />
-                  </span>
+                  <Tooltip content={METRIC_TOOLTIPS.latencyP50} />
                 </span>
               </th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="relative inline-block pr-5">
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
                   Latency P99
-                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
-                    <Tooltip content={METRIC_TOOLTIPS.latencyP99} />
-                  </span>
+                  <Tooltip content={METRIC_TOOLTIPS.latencyP99} />
                 </span>
               </th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="relative inline-block pr-5">
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
                   Retries
-                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
-                    <Tooltip content={METRIC_TOOLTIPS.retries} />
-                  </span>
+                  <Tooltip content={METRIC_TOOLTIPS.retries} />
                 </span>
               </th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">
-                <span className="relative inline-block pr-5">
+              <th className="text-center py-3 px-6 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
                   Penalty
-                  <span className="absolute top-1/2 -translate-y-1/2 right-0">
-                    <Tooltip content={METRIC_TOOLTIPS.penalty} />
-                  </span>
+                  <Tooltip content={METRIC_TOOLTIPS.penalty} />
                 </span>
               </th>
             </tr>
@@ -256,22 +244,22 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                         )}
                       </div>
                     </td>
-                    <td className="text-right py-3 px-4 font-mono font-semibold" style={{ color }}>
+                    <td className="text-center py-3 px-4 font-mono font-semibold" style={{ color }}>
                       {agg.totalScore}
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-300">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {(agg.avgSuccessRate * 100).toFixed(1)}%
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-300">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {agg.avgLatencyP50.toFixed(1)}ms
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-300">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {agg.avgLatencyP99.toFixed(1)}ms
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-400">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {agg.totalRetries}
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-400">
+                    <td className="text-center py-3 px-6 font-mono text-slate-300">
                       {agg.totalPenalty}
                     </td>
                   </tr>
@@ -302,22 +290,22 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                               </span>
                             </div>
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs" style={{ color: configColor }}>
+                          <td className="text-center py-2 px-4 font-mono text-xs" style={{ color: configColor }}>
                             {configMetrics.score}
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-400">
                             {(configMetrics.success_rate * 100).toFixed(1)}%
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-400">
                             {configMetrics.latency_p50.toFixed(1)}ms
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-400">
                             {configMetrics.latency_p99.toFixed(1)}ms
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-500">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-300">
                             {configMetrics.total_retries}
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-500">
+                          <td className="text-center py-2 px-6 font-mono text-xs text-slate-300">
                             {configMetrics.total_penalty}
                           </td>
                         </tr>
