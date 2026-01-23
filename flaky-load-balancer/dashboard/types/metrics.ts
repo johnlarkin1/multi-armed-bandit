@@ -7,6 +7,20 @@ export interface PerServerMetrics {
   avg_latency_ms: number;
 }
 
+export interface PerConfigMetrics {
+  config: ServerType;
+  total_requests: number;
+  total_success: number;
+  total_failure: number;
+  total_retries: number;
+  total_penalty: number;
+  success_rate: number;
+  global_regret: number;
+  score: number;
+  latency_p50: number;
+  latency_p99: number;
+}
+
 export interface MetricsSnapshot {
   type: 'metrics' | 'connected' | 'heartbeat';
   timestamp: number;
@@ -23,6 +37,7 @@ export interface MetricsSnapshot {
   latency_p99: number;
   latencies: number[];
   per_server: Record<string, PerServerMetrics>;
+  per_config: Record<ServerType, PerConfigMetrics>;
   last_update: number;
 }
 
@@ -56,6 +71,7 @@ export interface RunSummary {
   total_penalty: number;
   latency_p50: number;
   latency_p99: number;
+  per_config?: Record<ServerType, PerConfigMetrics>;
 }
 
 export type ServerType = 'T1' | 'T2' | 'T3';
@@ -76,6 +92,18 @@ export const STRATEGY_COLORS: Record<Strategy, string> = {
   v3: '#22C55E', // green
   v4: '#A855F7', // purple
   v5: '#F97316', // orange
+};
+
+export const CONFIG_COLORS: Record<ServerType, string> = {
+  T1: '#3B82F6', // blue
+  T2: '#22C55E', // green
+  T3: '#F97316', // orange
+};
+
+export const CONFIG_PORT_RANGES: Record<ServerType, { start: number; end: number }> = {
+  T1: { start: 4000, end: 4009 },
+  T2: { start: 5000, end: 5009 },
+  T3: { start: 6000, end: 6009 },
 };
 
 export function getServerType(port: number): ServerType {

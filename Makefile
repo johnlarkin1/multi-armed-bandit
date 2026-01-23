@@ -3,7 +3,7 @@
         format fmt format-python \
         typecheck typecheck-python typecheck-typescript \
         harness dashboard dashboard-build servers \
-        clean favicon
+        clean clean-runs favicon
 
 # Default target - show help
 .DEFAULT_GOAL := help
@@ -94,3 +94,6 @@ clean: ## Clean build artifacts and caches
 	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+
+clean-runs: ## Remove all test run CSV files from runs directory
+	rm -f $(FLB_DIR)/runs/*.csv

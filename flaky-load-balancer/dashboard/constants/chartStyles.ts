@@ -44,6 +44,7 @@ export const GRADIENT_OPACITY = {
 
 // Color with opacity helper - converts hex color to rgba or hex with alpha
 export const COLOR_OPACITY = {
+  ultraLight: '15', // ~8% opacity for subtle backgrounds
   light: '30', // ~19% opacity for backgrounds
   medium: '50', // ~31% opacity
   heavy: '80', // ~50% opacity

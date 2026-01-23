@@ -9,11 +9,13 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
   Cell,
 } from 'recharts';
 import { useShallow } from 'zustand/react/shallow';
 import { useDashboardStore } from '@/stores/dashboardStore';
-import { getServerType, getHealthColor, type ServerType } from '@/types/metrics';
+import { getServerType, getHealthColor, CONFIG_COLORS, type ServerType } from '@/types/metrics';
+import { ConfigLegend } from './ConfigLegend';
 import {
   TOOLTIP_CONTENT_STYLE,
   GRID_STROKE,
@@ -24,6 +26,7 @@ import {
   CHART_COLORS,
   REFERENCE_LINE_OPACITY,
   CHART_MARGINS,
+  withOpacity,
 } from '@/constants/chartStyles';
 
 interface DataPoint {
@@ -74,6 +77,28 @@ export function ServerHealthChart() {
     .filter((d) => selectedServerTypes.includes(d.serverType))
     .sort((a, b) => parseInt(a.port, 10) - parseInt(b.port, 10));
 
+  // Compute port ranges for each config type for ReferenceArea backgrounds
+  const configRanges: { config: ServerType; firstPort: string; lastPort: string }[] = [];
+  let currentConfig: ServerType | null = null;
+  let firstPort: string | null = null;
+  let lastPort: string | null = null;
+
+  for (const point of data) {
+    if (point.serverType !== currentConfig) {
+      if (currentConfig !== null && firstPort !== null && lastPort !== null) {
+        configRanges.push({ config: currentConfig, firstPort, lastPort });
+      }
+      currentConfig = point.serverType;
+      firstPort = point.port;
+      lastPort = point.port;
+    } else {
+      lastPort = point.port;
+    }
+  }
+  if (currentConfig !== null && firstPort !== null && lastPort !== null) {
+    configRanges.push({ config: currentConfig, firstPort, lastPort });
+  }
+
   const formatPercent = (v: number) => `${v}%`;
   const formatTooltipValue = (
     value: number | undefined,
@@ -111,6 +136,16 @@ export function ServerHealthChart() {
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} margin={CHART_MARGINS.withLabels}>
           <CartesianGrid strokeDasharray={GRID_DASH_ARRAY} stroke={GRID_STROKE} />
+          {/* Config type background shading */}
+          {configRanges.map((range) => (
+            <ReferenceArea
+              key={range.config}
+              x1={range.firstPort}
+              x2={range.lastPort}
+              fill={withOpacity(CONFIG_COLORS[range.config], 'ultraLight')}
+              strokeOpacity={0}
+            />
+          ))}
           <XAxis
             dataKey="port"
             stroke={AXIS_STROKE}
@@ -145,6 +180,10 @@ export function ServerHealthChart() {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      {/* Config type legend */}
+      <div className="mt-2 flex justify-center">
+        <ConfigLegend showPortRanges={true} />
+      </div>
     </div>
   );
 }
