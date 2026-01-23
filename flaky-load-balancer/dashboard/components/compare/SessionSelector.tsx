@@ -91,19 +91,19 @@ export function SessionSelector({ sessions, selectedSessionId, isLoading }: Sess
             </div>
 
             <div className="flex flex-wrap gap-1.5 mb-3">
-              {session.strategies.map((strategy) => {
-                const key = getStrategyKey(strategy);
-                const color = STRATEGY_COLORS[key];
+              {session.strategies.map((strategy, index) => {
+                const strategyKey = getStrategyKey(strategy);
+                const color = STRATEGY_COLORS[strategyKey];
                 return (
                   <span
-                    key={strategy}
+                    key={`${session.session_id}-${strategy}-${index}`}
                     className="px-2 py-0.5 rounded text-xs font-medium"
                     style={{
                       backgroundColor: withOpacity(color, 'light'),
                       color: color,
                     }}
                   >
-                    {key.toUpperCase()}
+                    {strategyKey.toUpperCase()}
                   </span>
                 );
               })}

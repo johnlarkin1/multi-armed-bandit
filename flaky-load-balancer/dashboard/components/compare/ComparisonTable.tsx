@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { Trophy, TrendingUp, TrendingDown, ChevronDown, ChevronRight } from 'lucide-react';
 import type { RunSummary, ServerType, PerConfigMetrics } from '@/types/metrics';
 import { STRATEGY_NAMES, STRATEGY_COLORS, CONFIG_COLORS, isStrategy } from '@/types/metrics';
@@ -10,12 +10,24 @@ interface ComparisonTableProps {
   data: RunSummary[];
 }
 
-export function ComparisonTable({ data }: ComparisonTableProps) {
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+interface AggregatedStrategy {
+  strategyKey: string;
+  strategyName: string;
+  // Aggregated metrics across all runs of this strategy
+  totalScore: number;
+  totalRequests: number;
+  totalSuccess: number;
+  totalRetries: number;
+  totalPenalty: number;
+  avgSuccessRate: number;
+  avgLatencyP50: number;
+  avgLatencyP99: number;
+  // Individual config data from runs
+  configs: Map<ServerType, { run_id: string; metrics: PerConfigMetrics }>;
+}
 
-  // Sort by score descending
-  const sortedData = [...data].sort((a, b) => b.score - a.score);
-  const bestScore = sortedData[0]?.score ?? 0;
+export function ComparisonTable({ data }: ComparisonTableProps) {
+  const [expandedStrategies, setExpandedStrategies] = useState<Set<string>>(new Set());
 
   const getStrategyKey = (strategy: string) => {
     const match = strategy.match(/^v\d/);
@@ -23,26 +35,91 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
     return isStrategy(candidate) ? candidate : 'v1';
   };
 
-  const getStrategyDisplayName = (strategy: string): string => {
-    const key = getStrategyKey(strategy);
-    return STRATEGY_NAMES[key] || strategy;
-  };
-
-  const toggleExpanded = (runId: string) => {
-    setExpandedRows((prev) => {
+  const toggleExpanded = (strategyKey: string) => {
+    setExpandedStrategies((prev) => {
       const next = new Set(prev);
-      if (next.has(runId)) {
-        next.delete(runId);
+      if (next.has(strategyKey)) {
+        next.delete(strategyKey);
       } else {
-        next.add(runId);
+        next.add(strategyKey);
       }
       return next;
     });
   };
 
-  const hasPerConfigData = (run: RunSummary): boolean => {
-    return !!run.per_config && Object.keys(run.per_config).length > 0;
-  };
+  // Aggregate runs by strategy
+  const strategyMap = new Map<string, AggregatedStrategy>();
+
+  data.forEach((run) => {
+    const strategyKey = getStrategyKey(run.strategy);
+
+    if (!strategyMap.has(strategyKey)) {
+      strategyMap.set(strategyKey, {
+        strategyKey,
+        strategyName: STRATEGY_NAMES[strategyKey] || run.strategy,
+        totalScore: 0,
+        totalRequests: 0,
+        totalSuccess: 0,
+        totalRetries: 0,
+        totalPenalty: 0,
+        avgSuccessRate: 0,
+        avgLatencyP50: 0,
+        avgLatencyP99: 0,
+        configs: new Map(),
+      });
+    }
+
+    const agg = strategyMap.get(strategyKey)!;
+
+    // Add to aggregated totals
+    agg.totalScore += run.score;
+    agg.totalRequests += run.total_requests;
+    agg.totalSuccess += run.total_success;
+    agg.totalRetries += run.total_retries;
+    agg.totalPenalty += run.total_penalty;
+
+    // Store config-specific data
+    if (run.per_config) {
+      (['T1', 'T2', 'T3'] as ServerType[]).forEach((config) => {
+        const configMetrics = run.per_config?.[config];
+        if (configMetrics && configMetrics.total_requests > 0) {
+          agg.configs.set(config, { run_id: run.run_id, metrics: configMetrics });
+        }
+      });
+    }
+  });
+
+  // Calculate averages and convert to array
+  const aggregatedStrategies: AggregatedStrategy[] = [];
+
+  strategyMap.forEach((agg) => {
+    const configCount = agg.configs.size;
+    if (configCount > 0) {
+      // Calculate weighted averages from config data
+      let totalLatencyP50 = 0;
+      let totalLatencyP99 = 0;
+      let totalSuccessRate = 0;
+
+      agg.configs.forEach(({ metrics }) => {
+        totalLatencyP50 += metrics.latency_p50;
+        totalLatencyP99 += metrics.latency_p99;
+        totalSuccessRate += metrics.success_rate;
+      });
+
+      agg.avgLatencyP50 = totalLatencyP50 / configCount;
+      agg.avgLatencyP99 = totalLatencyP99 / configCount;
+      agg.avgSuccessRate = totalSuccessRate / configCount;
+    } else if (agg.totalRequests > 0) {
+      agg.avgSuccessRate = agg.totalSuccess / agg.totalRequests;
+    }
+
+    aggregatedStrategies.push(agg);
+  });
+
+  // Sort by total score descending
+  aggregatedStrategies.sort((a, b) => b.totalScore - a.totalScore);
+
+  const bestScore = aggregatedStrategies[0]?.totalScore ?? 0;
 
   if (data.length === 0) {
     return null;
@@ -70,22 +147,21 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
             </tr>
           </thead>
           <tbody>
-            {sortedData.map((run, index) => {
-              const strategyKey = getStrategyKey(run.strategy);
-              const color = STRATEGY_COLORS[strategyKey] || '#64748b';
-              const isBest = run.score === bestScore;
-              const isWorst = index === sortedData.length - 1 && sortedData.length > 1;
-              const isExpanded = expandedRows.has(run.run_id);
-              const canExpand = hasPerConfigData(run);
+            {aggregatedStrategies.map((agg, index) => {
+              const color = STRATEGY_COLORS[agg.strategyKey as keyof typeof STRATEGY_COLORS] || '#64748b';
+              const isBest = agg.totalScore === bestScore;
+              const isWorst = index === aggregatedStrategies.length - 1 && aggregatedStrategies.length > 1;
+              const isExpanded = expandedStrategies.has(agg.strategyKey);
+              const canExpand = agg.configs.size > 0;
 
               return (
-                <>
+                <Fragment key={agg.strategyKey}>
+                  {/* Strategy aggregate row */}
                   <tr
-                    key={run.run_id}
                     className={`border-b border-slate-700/50 transition-colors ${
                       isBest ? 'bg-green-500/10' : ''
                     } ${canExpand ? 'cursor-pointer hover:bg-slate-700/30' : ''}`}
-                    onClick={() => canExpand && toggleExpanded(run.run_id)}
+                    onClick={() => canExpand && toggleExpanded(agg.strategyKey)}
                   >
                     <td className="py-3 px-4">
                       {canExpand && (
@@ -107,10 +183,13 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                             color: color,
                           }}
                         >
-                          {strategyKey.toUpperCase()}
+                          {agg.strategyKey.toUpperCase()}
                         </span>
                         <span className="text-slate-300">
-                          {getStrategyDisplayName(run.strategy)}
+                          {agg.strategyName}
+                        </span>
+                        <span className="text-slate-500 text-xs">
+                          ({agg.configs.size} {agg.configs.size === 1 ? 'config' : 'configs'})
                         </span>
                         {isBest && (
                           <span className="flex items-center gap-1 px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-medium">
@@ -126,36 +205,37 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                       </div>
                     </td>
                     <td className="text-right py-3 px-4 font-mono font-semibold" style={{ color }}>
-                      {run.score}
+                      {agg.totalScore}
                     </td>
                     <td className="text-right py-3 px-4 font-mono text-slate-300">
-                      {(run.success_rate * 100).toFixed(1)}%
+                      {(agg.avgSuccessRate * 100).toFixed(1)}%
                     </td>
                     <td className="text-right py-3 px-4 font-mono text-slate-300">
-                      {run.latency_p50.toFixed(1)}ms
+                      {agg.avgLatencyP50.toFixed(1)}ms
                     </td>
                     <td className="text-right py-3 px-4 font-mono text-slate-300">
-                      {run.latency_p99.toFixed(1)}ms
+                      {agg.avgLatencyP99.toFixed(1)}ms
                     </td>
                     <td className="text-right py-3 px-4 font-mono text-slate-400">
-                      {run.total_retries}
+                      {agg.totalRetries}
                     </td>
                     <td className="text-right py-3 px-4 font-mono text-slate-400">
-                      {run.total_penalty}
+                      {agg.totalPenalty}
                     </td>
                   </tr>
 
                   {/* Expanded per-config rows */}
-                  {isExpanded && run.per_config && (
+                  {isExpanded &&
                     (['T1', 'T2', 'T3'] as ServerType[]).map((configType) => {
-                      const configMetrics: PerConfigMetrics | undefined = run.per_config?.[configType];
-                      if (!configMetrics || configMetrics.total_requests === 0) return null;
+                      const configData = agg.configs.get(configType);
+                      if (!configData) return null;
 
                       const configColor = CONFIG_COLORS[configType];
+                      const configMetrics = configData.metrics;
 
                       return (
                         <tr
-                          key={`${run.run_id}-${configType}`}
+                          key={`${agg.strategyKey}-${configType}`}
                           className="border-b border-slate-700/30 bg-slate-700/20"
                         >
                           <td className="py-2 px-4"></td>
@@ -190,9 +270,8 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                           </td>
                         </tr>
                       );
-                    })
-                  )}
-                </>
+                    })}
+                </Fragment>
               );
             })}
           </tbody>
@@ -201,7 +280,7 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
 
       {/* Score explanation */}
       <div className="mt-4 text-xs text-slate-500">
-        Score = Successful Requests - Penalty Retries (attempts {'>'} 3). Click a row to expand config breakdown.
+        Score = Successful Requests - Penalty Retries (attempts {'>'} 3). Aggregated across all configs. Click a row to expand config breakdown.
       </div>
     </div>
   );
