@@ -30,9 +30,10 @@ async def post_root(request: RootRequest) -> RootResponse:
 
     request_number = csv_logger.new_request()
 
-    # I chose 6 basically arbitrarily, but was also trying to be cognizant if
-    # each request is taking 2ms, 6*2ms = 12ms which is a little more than 10ms
-    # and then 10RPS so 10*12ms = 120ms so that leaves us a healthy buffer
+    # I chose 10 basically arbitrarily, but was also trying to be cognizant if
+    # each request is taking 2ms - after some benchmarking that's my p99,
+    # 10*2ms = 20ms
+    # and then 10RPS so 10*20ms = 200ms so that leaves us a healthy buffer
     # for appropriate processing time
     while attempt < MAX_ATTEMPTS:
         if attempt < PENALTY_FREE_ATTEMPTS:

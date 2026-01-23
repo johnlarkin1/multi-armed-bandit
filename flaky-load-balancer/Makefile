@@ -1,4 +1,4 @@
-.PHONY: help favicon harness dashboard dashboard-build dashboard-install servers install lint format
+.PHONY: help favicon harness lb server dashboard dashboard-build dashboard-install servers install lint format
 
 # Default target - show help
 .DEFAULT_GOAL := help
@@ -14,6 +14,11 @@ favicon: ## Copy favicon assets to dashboard public folder
 
 harness: ## Run the full test harness (servers + LB + dashboard + tests)
 	uv run flb start harness
+
+lb: ## Start just the FastAPI load balancer server
+	LB_STRATEGY=v4 uv run uvicorn flaky_load_balancer.main:app --reload
+
+server: lb ## Alias for 'lb'
 
 dashboard: ## Start the Next.js dashboard dev server
 	uv run flb start dashboard

@@ -81,7 +81,9 @@ class CSVLogger:
         self._current_strategy: str | None = None
         RUNS_DIR.mkdir(exist_ok=True)
 
-    def start_new_run(self, strategy: str, session_id: str | None = None, config_target: str = "T1") -> str:
+    def start_new_run(
+        self, strategy: str, session_id: str | None = None, config_target: str = "T1"
+    ) -> str:
         """Start a new run with a unique ID. Returns the run_id."""
         with self._lock:
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -267,7 +269,6 @@ _logger: CSVLogger | None = None
 
 
 def get_csv_logger() -> CSVLogger:
-    """Get or create the global CSV logger instance."""
     global _logger
     if _logger is None:
         _logger = CSVLogger()
