@@ -13,7 +13,7 @@ export async function isFastAPIAvailable(): Promise<boolean> {
     const timeoutId = setTimeout(() => controller.abort(), FASTAPI_TIMEOUT);
 
     const response = await fetch(`${FASTAPI_URL}/health`, {
-      method: 'HEAD',
+      method: 'GET',
       signal: controller.signal,
     });
 
