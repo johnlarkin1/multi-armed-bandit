@@ -5,6 +5,16 @@ import { Trophy, TrendingUp, TrendingDown, ChevronDown, ChevronRight } from 'luc
 import type { RunSummary, ServerType, PerConfigMetrics } from '@/types/metrics';
 import { STRATEGY_NAMES, STRATEGY_COLORS, CONFIG_COLORS, isStrategy } from '@/types/metrics';
 import { withOpacity } from '@/constants/chartStyles';
+import { Tooltip } from '@/components/ui/Tooltip';
+
+const METRIC_TOOLTIPS = {
+  score: 'Successful Requests - Penalty Retries. Higher is better.',
+  successRate: 'Percentage of requests that succeeded (after up to 10 retry attempts).',
+  latencyP50: 'Median response time across all attempts.',
+  latencyP99: '99th percentile response time (slowest 1% of attempts).',
+  retries: 'Total retry attempts (excludes initial attempt per request).',
+  penalty: 'Attempts beyond the first 3 penalty-free tries. Each costs 0.5 points.',
+};
 
 interface ComparisonTableProps {
   data: RunSummary[];
@@ -137,13 +147,43 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
           <thead>
             <tr className="border-b border-slate-700">
               <th className="text-left py-3 px-4 font-medium text-slate-300 w-8"></th>
-              <th className="text-left py-3 px-4 font-medium text-slate-300">Strategy</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Score</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Success Rate</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Latency P50</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Latency P99</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Retries</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Penalty</th>
+              <th className="text-left py-3 px-4 font-medium text-slate-300 w-120">Strategy</th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Score
+                  <Tooltip content={METRIC_TOOLTIPS.score} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Success Rate
+                  <Tooltip content={METRIC_TOOLTIPS.successRate} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Latency P50
+                  <Tooltip content={METRIC_TOOLTIPS.latencyP50} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Latency P99
+                  <Tooltip content={METRIC_TOOLTIPS.latencyP99} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Retries
+                  <Tooltip content={METRIC_TOOLTIPS.retries} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-6 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Penalty
+                  <Tooltip content={METRIC_TOOLTIPS.penalty} />
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -204,22 +244,22 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                         )}
                       </div>
                     </td>
-                    <td className="text-right py-3 px-4 font-mono font-semibold" style={{ color }}>
+                    <td className="text-center py-3 px-4 font-mono font-semibold" style={{ color }}>
                       {agg.totalScore}
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-300">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {(agg.avgSuccessRate * 100).toFixed(1)}%
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-300">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {agg.avgLatencyP50.toFixed(1)}ms
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-300">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {agg.avgLatencyP99.toFixed(1)}ms
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-400">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {agg.totalRetries}
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-400">
+                    <td className="text-center py-3 px-6 font-mono text-slate-300">
                       {agg.totalPenalty}
                     </td>
                   </tr>
@@ -250,22 +290,22 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                               </span>
                             </div>
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs" style={{ color: configColor }}>
+                          <td className="text-center py-2 px-4 font-mono text-xs" style={{ color: configColor }}>
                             {configMetrics.score}
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-400">
                             {(configMetrics.success_rate * 100).toFixed(1)}%
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-400">
                             {configMetrics.latency_p50.toFixed(1)}ms
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-400">
                             {configMetrics.latency_p99.toFixed(1)}ms
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-500">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-300">
                             {configMetrics.total_retries}
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-500">
+                          <td className="text-center py-2 px-6 font-mono text-xs text-slate-300">
                             {configMetrics.total_penalty}
                           </td>
                         </tr>

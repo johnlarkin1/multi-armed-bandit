@@ -5,6 +5,16 @@ import { Trophy, Server, ChevronDown, ChevronRight } from 'lucide-react';
 import type { RunSummary, ServerType, PerConfigMetrics } from '@/types/metrics';
 import { STRATEGY_NAMES, STRATEGY_COLORS, CONFIG_COLORS, CONFIG_PORT_RANGES, isStrategy } from '@/types/metrics';
 import { withOpacity } from '@/constants/chartStyles';
+import { Tooltip } from '@/components/ui/Tooltip';
+
+const METRIC_TOOLTIPS = {
+  score: 'Successful Requests - Penalty Retries. Higher is better.',
+  successRate: 'Percentage of requests that succeeded (after up to 10 retry attempts).',
+  latencyP50: 'Median response time across all attempts.',
+  latencyP99: '99th percentile response time (slowest 1% of attempts).',
+  retries: 'Total retry attempts (excludes initial attempt per request).',
+  penalty: 'Attempts beyond the first 3 penalty-free tries. Each costs 0.5 points.',
+};
 
 interface ConfigComparisonTableProps {
   data: RunSummary[];
@@ -94,13 +104,43 @@ export function ConfigComparisonTable({ data }: ConfigComparisonTableProps) {
           <thead>
             <tr className="border-b border-slate-700">
               <th className="text-left py-3 px-4 font-medium text-slate-300 w-8"></th>
-              <th className="text-left py-3 px-4 font-medium text-slate-300">Config / Strategy</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Score</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Success Rate</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Latency P50</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Latency P99</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Retries</th>
-              <th className="text-right py-3 px-4 font-medium text-slate-300">Penalty</th>
+              <th className="text-left py-3 px-4 font-medium text-slate-300 w-120">Config / Strategy</th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Score
+                  <Tooltip content={METRIC_TOOLTIPS.score} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Success Rate
+                  <Tooltip content={METRIC_TOOLTIPS.successRate} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Latency P50
+                  <Tooltip content={METRIC_TOOLTIPS.latencyP50} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Latency P99
+                  <Tooltip content={METRIC_TOOLTIPS.latencyP99} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Retries
+                  <Tooltip content={METRIC_TOOLTIPS.retries} />
+                </span>
+              </th>
+              <th className="text-center py-3 px-6 font-medium text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Penalty
+                  <Tooltip content={METRIC_TOOLTIPS.penalty} />
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -157,22 +197,22 @@ export function ConfigComparisonTable({ data }: ConfigComparisonTableProps) {
                         </span>
                       </div>
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-400">
+                    <td className="text-center py-3 px-4 font-mono font-semibold" style={{ color: configColor }}>
                       {avgScore.toFixed(1)}
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-400">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {(avgSuccessRate * 100).toFixed(1)}%
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-400">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {avgLatencyP50.toFixed(1)}ms
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-400">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {avgLatencyP99.toFixed(1)}ms
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-500">
+                    <td className="text-center py-3 px-4 font-mono text-slate-300">
                       {totalRetries}
                     </td>
-                    <td className="text-right py-3 px-4 font-mono text-slate-500">
+                    <td className="text-center py-3 px-6 font-mono text-slate-300">
                       {totalPenalty}
                     </td>
                   </tr>
@@ -180,13 +220,13 @@ export function ConfigComparisonTable({ data }: ConfigComparisonTableProps) {
                   {/* Expanded strategy rows */}
                   {isExpanded &&
                     strategies.map((strategyData) => {
-                      const color = STRATEGY_COLORS[strategyData.strategyKey as keyof typeof STRATEGY_COLORS] || '#64748b';
+                      const strategyColor = STRATEGY_COLORS[strategyData.strategyKey as keyof typeof STRATEGY_COLORS] || '#64748b';
                       const isBest = strategyData.metrics.score === bestScore;
 
                       return (
                         <tr
                           key={`${config}-${strategyData.run_id}`}
-                          className="border-b border-slate-700/30 bg-slate-800/50"
+                          className={`border-b border-slate-700/30 ${isBest ? 'bg-green-500/10' : ''}`}
                         >
                           <td className="py-2 px-4"></td>
                           <td className="py-2 px-4 pl-12">
@@ -194,13 +234,13 @@ export function ConfigComparisonTable({ data }: ConfigComparisonTableProps) {
                               <span
                                 className="px-2 py-0.5 rounded text-xs font-bold"
                                 style={{
-                                  backgroundColor: withOpacity(color, 'light'),
-                                  color: color,
+                                  backgroundColor: withOpacity(strategyColor, 'light'),
+                                  color: strategyColor,
                                 }}
                               >
                                 {strategyData.strategyKey.toUpperCase()}
                               </span>
-                              <span className="text-slate-400 text-xs">
+                              <span className="text-slate-300 text-xs">
                                 {getStrategyDisplayName(strategyData.strategy)}
                               </span>
                               {isBest && strategies.length > 1 && (
@@ -211,22 +251,22 @@ export function ConfigComparisonTable({ data }: ConfigComparisonTableProps) {
                               )}
                             </div>
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs font-semibold" style={{ color }}>
+                          <td className="text-center py-2 px-4 font-mono text-xs font-semibold" style={{ color: configColor }}>
                             {strategyData.metrics.score}
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-300">
                             {(strategyData.metrics.success_rate * 100).toFixed(1)}%
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-300">
                             {strategyData.metrics.latency_p50.toFixed(1)}ms
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-400">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-300">
                             {strategyData.metrics.latency_p99.toFixed(1)}ms
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-500">
+                          <td className="text-center py-2 px-4 font-mono text-xs text-slate-300">
                             {strategyData.metrics.total_retries}
                           </td>
-                          <td className="text-right py-2 px-4 font-mono text-xs text-slate-500">
+                          <td className="text-center py-2 px-6 font-mono text-xs text-slate-300">
                             {strategyData.metrics.total_penalty}
                           </td>
                         </tr>
