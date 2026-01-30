@@ -8,6 +8,7 @@ class ServerMetricsResponse(BaseModel):
     num_requests: int = 0
     num_success: int = 0
     num_failure: int = 0
+    num_rate_limited: int = 0
     success_rate: float = 0.0
     avg_latency_ms: float = 0.0
 
@@ -24,6 +25,7 @@ class MetricsSnapshot(BaseModel):
     total_failure: int = 0
     total_retries: int = 0
     total_penalty: int = 0
+    total_rate_limited: int = 0
     global_regret: int = 0
     best_guess_score: int = 0
     latency_p50: float = 0.0

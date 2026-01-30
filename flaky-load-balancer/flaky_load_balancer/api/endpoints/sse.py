@@ -20,9 +20,7 @@ from flaky_load_balancer.api.schema.history import ServerMetricsResponse
 router = APIRouter()
 
 
-def format_sse_event(
-    event_type: str, data: SSEConnectedEvent | SSEMetricsEvent | dict
-) -> str:
+def format_sse_event(event_type: str, data: SSEConnectedEvent | SSEMetricsEvent | dict) -> str:
     if isinstance(data, dict):
         json_data = orjson.dumps(data).decode()
     else:
@@ -56,6 +54,7 @@ async def metrics_event_generator() -> AsyncGenerator[str, None]:
                         num_requests=server_metrics.num_requests,
                         num_success=server_metrics.num_success,
                         num_failure=server_metrics.num_failure,
+                        num_rate_limited=server_metrics.num_rate_limited,
                         success_rate=round(server_metrics.success_rate, 4),
                         avg_latency_ms=round(server_metrics.avg_latency_ms, 2),
                     )
@@ -72,6 +71,7 @@ async def metrics_event_generator() -> AsyncGenerator[str, None]:
                     total_failure=metrics.total_failure,
                     total_retries=metrics.total_retries,
                     total_penalty=metrics.total_penalty,
+                    total_rate_limited=metrics.total_rate_limited,
                     global_regret=metrics.global_regret,
                     best_guess_score=metrics.best_guess_score,
                     latency_p50=round(metrics.latency_p50, 2),
@@ -122,6 +122,7 @@ async def get_snapshot() -> SnapshotResponse:
         total_failure=metrics.total_failure,
         total_retries=metrics.total_retries,
         total_penalty=metrics.total_penalty,
+        total_rate_limited=metrics.total_rate_limited,
         global_regret=metrics.global_regret,
         best_guess_score=metrics.best_guess_score,
         latency_p50=round(metrics.latency_p50, 2),

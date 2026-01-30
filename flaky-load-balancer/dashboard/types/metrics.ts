@@ -3,6 +3,7 @@ export interface PerServerMetrics {
   num_requests: number;
   num_success: number;
   num_failure: number;
+  num_rate_limited: number;
   success_rate: number;
   avg_latency_ms: number;
 }
@@ -31,6 +32,7 @@ export interface MetricsSnapshot {
   total_failure: number;
   total_retries: number;
   total_penalty: number;
+  total_rate_limited: number;
   global_regret: number;
   best_guess_score: number;
   latency_p50: number;
@@ -75,7 +77,7 @@ export interface RunSummary {
 }
 
 export type ServerType = 'T1' | 'T2' | 'T3';
-export type Strategy = 'v1' | 'v2' | 'v3' | 'v4' | 'v5';
+export type Strategy = 'v1' | 'v2' | 'v3' | 'v4' | 'v5' | 'v6' | 'v7' | 'v8';
 export type TimeRange = 'all' | '30s' | '1m' | '5m';
 
 export const STRATEGY_NAMES: Record<Strategy, string> = {
@@ -84,6 +86,9 @@ export const STRATEGY_NAMES: Record<Strategy, string> = {
   v3: 'UCB Modified',
   v4: 'Thompson Sampling',
   v5: 'Thompson Modified',
+  v6: 'Thompson Masked',
+  v7: 'Sliding Window',
+  v8: 'Blocking Bandit',
 };
 
 export const STRATEGY_COLORS: Record<Strategy, string> = {
@@ -92,6 +97,9 @@ export const STRATEGY_COLORS: Record<Strategy, string> = {
   v3: '#22C55E', // green
   v4: '#A855F7', // purple
   v5: '#F97316', // orange
+  v6: '#14B8A6', // teal
+  v7: '#EC4899', // pink
+  v8: '#6366F1', // indigo
 };
 
 export const CONFIG_COLORS: Record<ServerType, string> = {
@@ -118,7 +126,7 @@ export function getHealthColor(successRate: number): string {
   return '#EF4444'; // red
 }
 
-const VALID_STRATEGIES = new Set<string>(['v1', 'v2', 'v3', 'v4', 'v5']);
+const VALID_STRATEGIES = new Set<string>(['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8']);
 
 /**
  * Type guard to check if a string is a valid Strategy.

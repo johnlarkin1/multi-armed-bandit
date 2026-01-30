@@ -55,6 +55,21 @@ def get_strategy(
 
         return ThompsonModifiedStrategy(config_target, filtered_configs)
 
+    elif strategy_enum == LoadBalancerStrategy.THOMPSON_MASKED:
+        from flaky_load_balancer.strategies.v6_thompson_masked import ThompsonMaskedStrategy
+
+        return ThompsonMaskedStrategy(config_target, filtered_configs)
+
+    elif strategy_enum == LoadBalancerStrategy.SLIDING_WINDOW:
+        from flaky_load_balancer.strategies.v7_sliding_window import SlidingWindowStrategy
+
+        return SlidingWindowStrategy(config_target, filtered_configs)
+
+    elif strategy_enum == LoadBalancerStrategy.BLOCKING_BANDIT:
+        from flaky_load_balancer.strategies.v8_blocking_bandit import BlockingBanditStrategy
+
+        return BlockingBanditStrategy(config_target, filtered_configs)
+
     else:
         raise ValueError(f"Unknown strategy: {strategy_name}")
 
